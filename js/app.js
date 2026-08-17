@@ -313,15 +313,27 @@ function appendMessage(text, isSent, customHTML = null, skipSave = false) {
   return bubble;
 }
 
+// Queue bot actions so messages and buttons stay in order
+let botMessageQueue = Promise.resolve();
+function queueBotAction(action) {
+  botMessageQueue = botMessageQueue.then(() => action());
+  return botMessageQueue;
+}
+
 // Append Bot Message with typing effect
 function appendBotMessage(text, customHTML = null, skipSave = false) {
-  showTypingIndicator();
-  const delay = 500 + Math.random() * 1000; // Random delay between 500-1500ms
-  
-  setTimeout(() => {
-    hideTypingIndicator();
-    appendMessage(text, false, customHTML, skipSave);
-  }, delay);
+  return queueBotAction(() => {
+    showTypingIndicator();
+    const delay = 500 + Math.random() * 1000; // Random delay between 500-1500ms
+    
+    return new Promise(resolve => {
+      setTimeout(() => {
+        hideTypingIndicator();
+        appendMessage(text, false, customHTML, skipSave);
+        resolve();
+      }, delay);
+    });
+  });
 }
 
 // Scroll chat to bottom
@@ -365,28 +377,33 @@ function hideTypingIndicator() {
 }
 
 // Append Option Buttons to the Chat
-function appendOptionButtons(options, horizontal = false) {
-  const container = document.createElement('div');
-  container.className = 'chat-action-buttons';
-  if (horizontal) {
-    container.classList.add('horizontal');
-  }
-  
-  options.forEach(opt => {
-    const btn = document.createElement('button');
-    btn.className = `chat-btn-option ${opt.class || ''}`;
-    btn.innerText = opt.text;
-    btn.onclick = () => {
-      container.remove();
-      // Render user's choice as a message
-      appendMessage(opt.text, true);
-      opt.action();
-    };
-    container.appendChild(btn);
-  });
-  
-  chatMessages.appendChild(container);
-  scrollToBottom();
+function appendOptionButtons(options, horizontal = false, delay = 0) {
+  return queueBotAction(() => new Promise(resolve => {
+    setTimeout(() => {
+      const container = document.createElement('div');
+      container.className = 'chat-action-buttons';
+      if (horizontal) {
+        container.classList.add('horizontal');
+      }
+      
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = `chat-btn-option ${opt.class || ''}`;
+        btn.innerText = opt.text;
+        btn.onclick = () => {
+          container.remove();
+          // Render user's choice as a message
+          appendMessage(opt.text, true);
+          opt.action();
+        };
+        container.appendChild(btn);
+      });
+      
+      chatMessages.appendChild(container);
+      scrollToBottom();
+      resolve();
+    }, delay);
+  }));
 }
 
 // Check Attendance and generate Report for a specific day
@@ -653,7 +670,7 @@ function processUserMessage(messageText) {
         { text: 'Licenciatura em Computação', class: 'primary', action: () => selectCourse('licenciatura_computacao') },
         { text: 'Bacharelado em Design', class: 'primary', action: () => selectCourse('design') },
         { text: 'Outro', class: 'primary', action: () => selectCourse('other') }
-      ]);
+      ], false, 1200);
       return;
     }
     
@@ -718,7 +735,7 @@ function processUserMessage(messageText) {
     appendOptionButtons([
       { text: 'Sim', class: 'danger', action: () => logAbsenceForSubjectIds(report.subjectIdsToAbsence) },
       { text: 'Não', class: 'primary', action: () => logPresence() }
-    ], true);
+    ], true, 1200);
     
   }, 1200);
 }
