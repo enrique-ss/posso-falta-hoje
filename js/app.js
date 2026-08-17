@@ -477,13 +477,13 @@ function generateVerdictReport(targetDay) {
   
   const verdictHTML = `
     <div class="schedule-container">
-      <div class="schedule-title">📅 ${WEEKDAYS[targetDay]}</div>
+      <div class="schedule-title">Grade Horária</div>
       <div class="schedule-list">
         ${scheduleHTML}
       </div>
     </div>
     <div class="report-section">
-      <div class="report-title">📊 Análise de Faltas</div>
+      <div class="report-title">Análise de Faltas</div>
       <ul class="report-details">
         ${reportDetailsHTML}
       </ul>
@@ -579,7 +579,7 @@ function applyThemeSettings() {
   const avatarText = document.getElementById('bot-avatar-text');
   const botAvatar = document.getElementById('bot-avatar');
   
-  if (nameDisplay) nameDisplay.innerText = settings.botName || 'Gerenciador de Faltas';
+  if (nameDisplay) nameDisplay.innerText = settings.botName || 'Posso faltar hoje?';
   
   if (botAvatar) {
     if (settings.botAvatarType === 'image' && settings.botAvatarImage) {
@@ -676,7 +676,7 @@ function processUserMessage(messageText) {
       
       applyThemeSettings();
       
-      appendMessage(`Pronto! Tudo configurado! 🎉\n\nAgora você pode me perguntar se pode faltar em qualquer dia da semana!`, false);
+      appendMessage(`Pronto! Tudo configurado! 🎉\n\nQuando quiser saber seus horários ou faltas é só me informar o dia da semana desejado!`, false);
       return;
     }
     
@@ -701,6 +701,17 @@ function processUserMessage(messageText) {
     
     // Show report
     appendMessage('', false, report.html);
+    
+    // Ask if user will skip classes (dynamic question based on day)
+    const dayName = WEEKDAYS[targetDay];
+    const isToday = targetDay === new Date().getDay();
+    const dayReference = isToday ? 'hoje' : dayName.toLowerCase();
+    
+    appendMessage(`Você vai faltar às aulas ${dayReference}?`, false);
+    appendOptionButtons([
+      { text: 'Sim', class: 'danger', action: () => logAbsenceForSubjectIds(report.subjectIdsToAbsence) },
+      { text: 'Não', class: 'primary', action: () => logPresence() }
+    ]);
     
   }, 1200);
 }
