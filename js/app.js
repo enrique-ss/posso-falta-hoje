@@ -10,11 +10,11 @@ let state = {
     botAvatarImage: 'resources/profile.png',
     theme: 'classic',
     customColors: {
-      primary: '#00a884',
-      bg: '#0b141a',
-      header: '#1f2c34',
-      bubbleSent: '#005c4b',
-      bubbleReceived: '#202c33'
+      primary: '#1f8f7a',
+      bg: '#0d1216',
+      header: '#182027',
+      bubbleSent: '#123f38',
+      bubbleReceived: '#1b242b'
     },
     bgImage: 'default',
     onboardingStep: 0
@@ -231,11 +231,11 @@ function loadData() {
       botAvatarImage: 'resources/profile.png',
       theme: 'classic',
       customColors: {
-        primary: '#00a884',
-        bg: '#0b141a',
-        header: '#1f2c34',
-        bubbleSent: '#005c4b',
-        bubbleReceived: '#202c33'
+        primary: '#1f8f7a',
+        bg: '#0d1216',
+        header: '#182027',
+        bubbleSent: '#123f38',
+        bubbleReceived: '#1b242b'
       },
       bgImage: 'default',
       onboardingStep: 0
@@ -492,12 +492,9 @@ function generateVerdictReport(targetDay) {
     const freqClass = currentFrequency < 75.0 ? 'status-danger' : (projectedFrequency < 75.0 ? 'status-danger' : 'status-success');
     
     reportDetailsHTML += `
-      <li class="report-item ${freqClass}">
-        <span class="report-item-name">${sub.name}</span>
-        <div class="report-item-stats">
-          <span>Atual: <strong>${absences}/${maxAbsences}</strong> faltas (${currentFrequency.toFixed(1)}%)</span>
-          <span class="report-item-projected">Se faltar: <strong>${newAbsences}/${maxAbsences}</strong> (${projectedFrequency.toFixed(1)}%)</span>
-        </div>
+      <li class="schedule-item report-item ${freqClass}">
+        <span class="schedule-subject">${sub.name}</span>
+        <span class="schedule-room">${newAbsences}/${maxAbsences} (${projectedFrequency.toFixed(1)}%)</span>
       </li>
     `;
   });
@@ -511,7 +508,7 @@ function generateVerdictReport(targetDay) {
     </div>
     <div class="report-section">
       <div class="report-title">Análise de Faltas</div>
-      <ul class="report-details">
+      <ul class="schedule-list">
         ${reportDetailsHTML}
       </ul>
     </div>
@@ -557,36 +554,44 @@ function detectTargetDayFromMessage(message) {
 // Theme presets configurations
 const THEME_PRESETS = {
   classic: {
-    primary: '#00a884',
-    bg: '#0b141a',
-    header: '#1f2c34',
-    bubbleSent: '#005c4b',
-    bubbleReceived: '#202c33',
-    textMain: '#e9edef'
+    primary: '#1f8f7a',
+    bg: '#0d1216',
+    header: '#182027',
+    bubbleSent: '#123f38',
+    bubbleReceived: '#1b242b',
+    textMain: '#d8dee3',
+    accent: '#6f8f87',
+    success: '#4f8f7d'
   },
   ocean: {
-    primary: '#1e3a8a',
-    bg: '#020617',
-    header: '#0f172a',
-    bubbleSent: '#172554',
-    bubbleReceived: '#1e293b',
-    textMain: '#f8fafc'
+    primary: '#35579b',
+    bg: '#080b12',
+    header: '#111827',
+    bubbleSent: '#172742',
+    bubbleReceived: '#1a2432',
+    textMain: '#d8e1f0',
+    accent: '#6e89b6',
+    success: '#5f86b8'
   },
   grape: {
-    primary: '#7c3aed',
-    bg: '#0f0518',
-    header: '#1e1b4b',
-    bubbleSent: '#5b21b6',
-    bubbleReceived: '#2e1065',
-    textMain: '#faf5ff'
+    primary: '#b04cff',
+    bg: '#0f0718',
+    header: '#20113a',
+    bubbleSent: '#6f1fd1',
+    bubbleReceived: '#2a0f44',
+    textMain: '#f0e7ff',
+    accent: '#d18bff',
+    success: '#b56bff'
   },
   rose: {
-    primary: '#dc2626',
-    bg: '#0a0202',
-    header: '#1a0505',
-    bubbleSent: '#7f1d1d',
-    bubbleReceived: '#290505',
-    textMain: '#fef2f2'
+    primary: '#c8192e',
+    bg: '#070203',
+    header: '#140406',
+    bubbleSent: '#8b0f22',
+    bubbleReceived: '#240609',
+    textMain: '#ffe9ea',
+    accent: '#d45c68',
+    success: '#bf3a4a'
   }
 };
 
@@ -626,6 +631,8 @@ function applyThemeSettings() {
     root.style.setProperty('--bubble-received', colors.bubbleReceived);
     root.style.setProperty('--whatsapp-green', colors.primary);
     root.style.setProperty('--whatsapp-green-hover', lightenDarkenColor(colors.primary, -15));
+    root.style.setProperty('--accent-color', colors.accent || colors.primary);
+    root.style.setProperty('--success-color', colors.success || colors.primary);
     root.style.setProperty('--text-main', colors.textMain || '#e9edef');
   }
 
