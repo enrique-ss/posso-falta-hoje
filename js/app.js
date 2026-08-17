@@ -243,15 +243,16 @@ function loadData() {
       onboardingStep: 0
     };
   } else {
+    // Migrate old saves that don't have themeMode — default to dark and persist immediately
     if (!state.userSettings.themeMode) {
       state.userSettings.themeMode = 'dark';
     }
     if (state.userSettings.onboardingStep < 4) {
       // Reset cached defaults if onboarding was not completed
-      state.userSettings.botName = '';
       state.userSettings.botAvatar = '';
       state.userSettings.botAvatarType = 'image';
       state.userSettings.botAvatarImage = 'resources/profile.png';
+      // Do NOT reset botName here — it's intentionally kept empty during onboarding
     }
   }
 
@@ -734,7 +735,7 @@ function applyThemeSettings() {
   const avatarText = document.getElementById('bot-avatar-text');
   const botAvatar = document.getElementById('bot-avatar');
   
-  if (nameDisplay) nameDisplay.innerText = settings.botName || 'Posso faltar hoje?';
+  if (nameDisplay) nameDisplay.innerText = settings.botName || 'Gerenciador de Faltas';
   
   if (botAvatar) {
     if (settings.botAvatarType === 'image' && settings.botAvatarImage) {
@@ -1516,12 +1517,25 @@ if (btnClearHistory) {
 
 const btnThemeMode = document.getElementById('btn-theme-mode');
 if (btnThemeMode) {
-  btnThemeMode.onclick = () => {
+  function toggleThemeMode(e) {
+    e.preventDefault();
+    e.stopPropagation();
     if (!state.userSettings) return;
-    state.userSettings.themeMode = state.userSettings.themeMode === 'light' ? 'dark' : 'light';
+    const current = state.userSettings.themeMode || 'dark';
+    state.userSettings.themeMode = current === 'light' ? 'dark' : 'light';
     saveData();
     applyThemeSettings();
-  };
+  }
+  // Use both touchend and click for maximum mobile compatibility
+  btnThemeMode.addEventListener('touchend', toggleThemeMode, { passive: false });
+  btnThemeMode.addEventListener('click', function(e) {
+    // Only fire click if not already handled by touchend (avoid double-fire)
+    if (!e.isTrusted || !('ontouchstart' in window)) {
+      toggleThemeMode(e);
+    } else {
+      // On touch devices, click fires after touchend — let touchend handle it
+    }
+  });
 }
 
 // Init application
