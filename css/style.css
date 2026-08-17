@@ -262,7 +262,7 @@ body {
   padding: 6px 8px;
   background-color: rgba(255, 255, 255, 0.03);
   border-radius: 6px;
-  border-left: 3px solid var(--whatsapp-green);
+  border-left: 2px solid var(--whatsapp-green);
 }
 
 .schedule-time {
