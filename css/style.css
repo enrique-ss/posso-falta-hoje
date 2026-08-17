@@ -47,7 +47,7 @@
 
 /* Modern File Selector Button styling */
 input[type="file"]::file-selector-button {
-  background-color: var(--header-bg);
+  background-color: var(--card-bg);
   border: var(--border-glass);
   border-radius: 6px;
   color: var(--text-main);
@@ -67,7 +67,7 @@ input[type="file"]::file-selector-button:hover {
 
 body {
   font-family: var(--font-family);
-  background-color: #090809;
+  background-color: var(--body-bg, #090809);
   color: var(--text-main);
   height: 100vh;
   height: 100dvh;
@@ -87,8 +87,6 @@ body {
   flex-direction: column;
   position: relative;
   box-shadow: var(--shadow-standard);
-  border-left: var(--border-glass);
-  border-right: var(--border-glass);
 }
 
 /* Header */
@@ -149,12 +147,12 @@ body {
 .contact-name {
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-main);
+  color: var(--header-text, var(--text-main));
 }
 
 .contact-status {
   font-size: 12px;
-  color: var(--whatsapp-green);
+  color: var(--status-color, var(--whatsapp-green));
   font-weight: 500;
   transition: color 0.3s;
 }
@@ -163,6 +161,10 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.chat-header .icon-btn {
+  color: var(--header-text, var(--text-muted));
 }
 
 /* Chat Messages Container */
@@ -180,7 +182,7 @@ body {
 /* Day Divider */
 .chat-day-divider {
   align-self: center;
-  background-color: rgba(24, 34, 41, 0.85);
+  background-color: var(--day-divider-bg, rgba(24, 34, 41, 0.85));
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 600;
@@ -224,14 +226,14 @@ body {
 .message-bubble.sent {
   align-self: flex-end;
   background-color: var(--bubble-sent);
-  color: var(--bubble-sent-text);
+  color: var(--bubble-sent-text, var(--text-main));
   border-top-right-radius: 2px;
 }
 
 .message-bubble.received {
   align-self: flex-start;
   background-color: var(--bubble-received);
-  color: var(--bubble-received-text);
+  color: var(--bubble-received-text, var(--text-main));
   border-top-left-radius: 2px;
   border: var(--border-glass);
 }
@@ -550,7 +552,8 @@ body {
 
 .drawer-content {
   width: 100%;
-  background-color: var(--header-bg);
+  background-color: var(--drawer-bg);
+  color: var(--text-main);
   border-top-left-radius: 20px;
   border-top-right-radius: 20px;
   max-height: 85%;
@@ -577,6 +580,7 @@ body {
 .drawer-header h2 {
   font-size: 18px;
   font-weight: 700;
+  color: var(--text-main);
 }
 
 .close-btn {
@@ -695,7 +699,7 @@ body {
 }
 
 .subject-card {
-  background-color: var(--input-bg);
+  background-color: var(--card-bg);
   border-radius: 10px;
   padding: 12px;
   border: var(--border-glass);
@@ -707,6 +711,7 @@ body {
 .subject-info h4 {
   font-size: 15px;
   font-weight: 600;
+  color: var(--text-main);
   margin-bottom: 4px;
 }
 
@@ -746,7 +751,7 @@ body {
 }
 
 .day-config-row {
-  background-color: var(--input-bg);
+  background-color: var(--card-bg);
   border-radius: 10px;
   padding: 12px;
   border: var(--border-glass);
@@ -777,7 +782,7 @@ body {
 .subject-badge-checkbox span {
   display: inline-block;
   padding: 6px 12px;
-  background-color: var(--header-bg);
+  background-color: var(--card-bg);
   color: var(--text-muted);
   border-radius: 16px;
   font-size: 12px;
@@ -816,7 +821,8 @@ body {
 }
 
 .modal-content {
-  background-color: var(--header-bg);
+  background-color: var(--modal-bg);
+  color: var(--text-main);
   border-radius: 14px;
   width: 100%;
   max-width: 380px;
@@ -828,6 +834,12 @@ body {
 .modal-content h3 {
   font-size: 18px;
   margin-bottom: 16px;
+  color: var(--text-main);
+}
+
+select option {
+  background-color: var(--drawer-bg);
+  color: var(--text-main);
 }
 
 .form-group {

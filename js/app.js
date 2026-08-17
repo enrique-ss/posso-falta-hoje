@@ -9,6 +9,7 @@ let state = {
     botAvatarType: 'image', // 'text' or 'image'
     botAvatarImage: 'resources/profile.png',
     theme: 'classic',
+    themeMode: 'dark',
     customColors: {
       primary: '#00a884',
       bg: '#0b141a',
@@ -230,6 +231,7 @@ function loadData() {
       botAvatarType: 'image',
       botAvatarImage: 'resources/profile.png',
       theme: 'classic',
+      themeMode: 'dark',
       customColors: {
         primary: '#00a884',
         bg: '#0b141a',
@@ -240,12 +242,17 @@ function loadData() {
       bgImage: 'default',
       onboardingStep: 0
     };
-  } else if (state.userSettings.onboardingStep < 4) {
-    // Reset cached defaults if onboarding was not completed
-    state.userSettings.botName = '';
-    state.userSettings.botAvatar = '';
-    state.userSettings.botAvatarType = 'image';
-    state.userSettings.botAvatarImage = 'resources/profile.png';
+  } else {
+    if (!state.userSettings.themeMode) {
+      state.userSettings.themeMode = 'dark';
+    }
+    if (state.userSettings.onboardingStep < 4) {
+      // Reset cached defaults if onboarding was not completed
+      state.userSettings.botName = '';
+      state.userSettings.botAvatar = '';
+      state.userSettings.botAvatarType = 'image';
+      state.userSettings.botAvatarImage = 'resources/profile.png';
+    }
   }
 
 
@@ -349,7 +356,7 @@ function showTypingIndicator() {
   if (typingIndicatorElem) return;
   
   chatStatus.innerText = 'digitando...';
-  chatStatus.style.color = 'var(--whatsapp-green)';
+  chatStatus.style.color = 'var(--status-color)';
   
   const bubble = document.createElement('div');
   bubble.className = 'typing-bubble';
@@ -586,53 +593,142 @@ function detectTargetDayFromMessage(message) {
   return null;
 }
 
-// Theme presets configurations
+// Theme presets configurations (Dark and Light modes)
 const THEME_PRESETS = {
   classic: {
-    primary: '#00a884',
-    bg: '#0b141a',
-    header: '#1f2c34',
-    bubbleSent: '#005c4b',
-    bubbleReceived: '#202c33',
-    textMain: '#e9edef',
-    accent: '#00a884',
-    success: '#00a884'
+    dark: {
+      primary: '#00a884',
+      bg: '#0b141a',
+      header: '#1f2c34',
+      headerText: '#e9edef',
+      inputBg: '#2a3942',
+      bubbleSent: '#005c4b',
+      bubbleSentText: '#e9edef',
+      bubbleReceived: '#202c33',
+      bubbleReceivedText: '#e9edef',
+      textMain: '#e9edef',
+      textMuted: '#8696a0',
+      dayDividerBg: 'rgba(24, 34, 41, 0.85)',
+      borderGlass: '1px solid rgba(255, 255, 255, 0.08)'
+    },
+    light: {
+      primary: '#008069',
+      bg: '#efeae2',
+      header: '#008069',
+      headerText: '#ffffff',
+      inputBg: '#ffffff',
+      bubbleSent: '#d9fdd3',
+      bubbleSentText: '#111b21',
+      bubbleReceived: '#ffffff',
+      bubbleReceivedText: '#111b21',
+      textMain: '#111b21',
+      textMuted: '#667781',
+      dayDividerBg: 'rgba(255, 255, 255, 0.9)',
+      borderGlass: '1px solid rgba(0, 0, 0, 0.08)'
+    }
   },
   ocean: {
-    primary: '#35579b',
-    bg: '#080b12',
-    header: '#111827',
-    bubbleSent: '#172742',
-    bubbleReceived: '#1a2432',
-    textMain: '#d8e1f0',
-    accent: '#35579b',
-    success: '#35579b'
+    dark: {
+      primary: '#35579b',
+      bg: '#080b12',
+      header: '#111827',
+      headerText: '#e9edef',
+      inputBg: '#1e293b',
+      bubbleSent: '#172742',
+      bubbleSentText: '#e9edef',
+      bubbleReceived: '#1a2432',
+      bubbleReceivedText: '#e9edef',
+      textMain: '#e9edef',
+      textMuted: '#8696a0',
+      dayDividerBg: 'rgba(15, 23, 42, 0.85)',
+      borderGlass: '1px solid rgba(255, 255, 255, 0.08)'
+    },
+    light: {
+      primary: '#1e40af',
+      bg: '#e0f2fe',
+      header: '#1e3a8a',
+      headerText: '#ffffff',
+      inputBg: '#ffffff',
+      bubbleSent: '#bae6fd',
+      bubbleSentText: '#111b21',
+      bubbleReceived: '#ffffff',
+      bubbleReceivedText: '#111b21',
+      textMain: '#111b21',
+      textMuted: '#667781',
+      dayDividerBg: 'rgba(255, 255, 255, 0.9)',
+      borderGlass: '1px solid rgba(0, 0, 0, 0.08)'
+    }
   },
   grape: {
-    primary: '#b04cff',
-    bg: '#0f0718',
-    header: '#20113a',
-    bubbleSent: '#6f1fd1',
-    bubbleReceived: '#2a0f44',
-    textMain: '#f0e7ff',
-    accent: '#b04cff',
-    success: '#b04cff'
+    dark: {
+      primary: '#b04cff',
+      bg: '#0f0718',
+      header: '#20113a',
+      headerText: '#e9edef',
+      inputBg: '#2e1952',
+      bubbleSent: '#6f1fd1',
+      bubbleSentText: '#e9edef',
+      bubbleReceived: '#2a0f44',
+      bubbleReceivedText: '#e9edef',
+      textMain: '#e9edef',
+      textMuted: '#8696a0',
+      dayDividerBg: 'rgba(32, 17, 58, 0.85)',
+      borderGlass: '1px solid rgba(255, 255, 255, 0.08)'
+    },
+    light: {
+      primary: '#8b5cf6',
+      bg: '#f5f3ff',
+      header: '#6d28d9',
+      headerText: '#ffffff',
+      inputBg: '#ffffff',
+      bubbleSent: '#ddd6fe',
+      bubbleSentText: '#111b21',
+      bubbleReceived: '#ffffff',
+      bubbleReceivedText: '#111b21',
+      textMain: '#111b21',
+      textMuted: '#667781',
+      dayDividerBg: 'rgba(255, 255, 255, 0.9)',
+      borderGlass: '1px solid rgba(0, 0, 0, 0.08)'
+    }
   },
   rose: {
-    primary: '#c8192e',
-    bg: '#070203',
-    header: '#140406',
-    bubbleSent: '#8b0f22',
-    bubbleReceived: '#240609',
-    textMain: '#ffe9ea',
-    accent: '#c8192e',
-    success: '#c8192e'
+    dark: {
+      primary: '#c8192e',
+      bg: '#070203',
+      header: '#140406',
+      headerText: '#e9edef',
+      inputBg: '#28080c',
+      bubbleSent: '#8b0f22',
+      bubbleSentText: '#e9edef',
+      bubbleReceived: '#240609',
+      bubbleReceivedText: '#e9edef',
+      textMain: '#e9edef',
+      textMuted: '#8696a0',
+      dayDividerBg: 'rgba(20, 4, 6, 0.85)',
+      borderGlass: '1px solid rgba(255, 255, 255, 0.08)'
+    },
+    light: {
+      primary: '#e11d48',
+      bg: '#fff1f2',
+      header: '#9f1239',
+      headerText: '#ffffff',
+      inputBg: '#ffffff',
+      bubbleSent: '#fecdd3',
+      bubbleSentText: '#111b21',
+      bubbleReceived: '#ffffff',
+      bubbleReceivedText: '#111b21',
+      textMain: '#111b21',
+      textMuted: '#667781',
+      dayDividerBg: 'rgba(255, 255, 255, 0.9)',
+      borderGlass: '1px solid rgba(0, 0, 0, 0.08)'
+    }
   }
 };
 
 function applyThemeSettings() {
   if (!state.userSettings) return;
   const settings = state.userSettings;
+  const mode = settings.themeMode || 'dark';
   
   const nameDisplay = document.getElementById('bot-name-display');
   const avatarText = document.getElementById('bot-avatar-text');
@@ -652,25 +748,47 @@ function applyThemeSettings() {
     }
   }
   
-  let colors = THEME_PRESETS[settings.theme];
-  if (!colors) {
-    colors = THEME_PRESETS.classic;
+  let preset = THEME_PRESETS[settings.theme];
+  if (!preset) {
+    preset = THEME_PRESETS.classic;
   }
   
-  if (colors) {
+  const themeConfig = preset[mode] || preset.dark;
+  
+  if (themeConfig) {
     const root = document.documentElement;
-    root.style.setProperty('--bg-color', colors.bg);
-    root.style.setProperty('--header-bg', colors.header);
-    root.style.setProperty('--input-bg', lightenDarkenColor(colors.header, 10));
-    root.style.setProperty('--bubble-sent', colors.bubbleSent || colors.primary);
-    root.style.setProperty('--bubble-received', colors.bubbleReceived);
-    root.style.setProperty('--whatsapp-green', colors.primary);
-    root.style.setProperty('--whatsapp-green-hover', lightenDarkenColor(colors.primary, -15));
-    root.style.setProperty('--accent-color', colors.accent || colors.primary);
-    root.style.setProperty('--success-color', colors.success || colors.primary);
-    root.style.setProperty('--text-main', colors.textMain || '#e9edef');
+    root.style.setProperty('--body-bg', themeConfig.bodyBg || (mode === 'light' ? '#d1d7db' : '#090809'));
+    root.style.setProperty('--bg-color', themeConfig.bg);
+    root.style.setProperty('--header-bg', themeConfig.header);
+    root.style.setProperty('--header-text', themeConfig.headerText || '#ffffff');
+    root.style.setProperty('--drawer-bg', themeConfig.drawerBg || (mode === 'light' ? '#ffffff' : themeConfig.header));
+    root.style.setProperty('--modal-bg', themeConfig.modalBg || (mode === 'light' ? '#ffffff' : themeConfig.header));
+    root.style.setProperty('--card-bg', themeConfig.cardBg || (mode === 'light' ? '#f0f2f5' : themeConfig.inputBg));
+    root.style.setProperty('--input-bg', themeConfig.inputBg);
+    root.style.setProperty('--bubble-sent', themeConfig.bubbleSent);
+    root.style.setProperty('--bubble-sent-text', themeConfig.bubbleSentText);
+    root.style.setProperty('--bubble-received', themeConfig.bubbleReceived);
+    root.style.setProperty('--bubble-received-text', themeConfig.bubbleReceivedText);
+    root.style.setProperty('--whatsapp-green', themeConfig.primary);
+    root.style.setProperty('--whatsapp-green-hover', lightenDarkenColor(themeConfig.primary, -15));
+    root.style.setProperty('--accent-color', themeConfig.primary);
+    root.style.setProperty('--success-color', themeConfig.primary);
+    root.style.setProperty('--text-main', themeConfig.textMain);
+    root.style.setProperty('--text-muted', themeConfig.textMuted);
+    root.style.setProperty('--border-glass', themeConfig.borderGlass);
+    root.style.setProperty('--day-divider-bg', themeConfig.dayDividerBg);
+    root.style.setProperty('--status-color', mode === 'light' ? 'rgba(255, 255, 255, 0.9)' : themeConfig.primary);
   }
 
+  // Update mode toggle icon in header
+  const themeModeIcon = document.getElementById('theme-mode-icon');
+  if (themeModeIcon) {
+    if (mode === 'light') {
+      themeModeIcon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`;
+    } else {
+      themeModeIcon.innerHTML = `<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>`;
+    }
+  }
 }
 
 function lightenDarkenColor(col, amt) {
@@ -1394,6 +1512,16 @@ function clearHistory() {
 const btnClearHistory = document.getElementById('btn-clear-history');
 if (btnClearHistory) {
   btnClearHistory.onclick = () => clearHistory();
+}
+
+const btnThemeMode = document.getElementById('btn-theme-mode');
+if (btnThemeMode) {
+  btnThemeMode.onclick = () => {
+    if (!state.userSettings) return;
+    state.userSettings.themeMode = state.userSettings.themeMode === 'light' ? 'dark' : 'light';
+    saveData();
+    applyThemeSettings();
+  };
 }
 
 // Init application
