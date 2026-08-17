@@ -753,7 +753,7 @@ function logAbsenceForSubjectIds(subjectIds) {
     renderSubjects();
     
     appendMessage(`Falta registrada com sucesso!`, false);
-    appendMessage(`- ${updatedNames.join('\n- ')}`, false);
+    appendMessage(`${updatedNames.join('\n ')}`, false);
     appendMessage('Sua frequência foi atualizada no painel!', false);
   }, 800);
 }
