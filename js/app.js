@@ -10,11 +10,11 @@ let state = {
     botAvatarImage: 'resources/profile.png',
     theme: 'classic',
     customColors: {
-      primary: '#1f8f7a',
-      bg: '#0d1216',
-      header: '#182027',
-      bubbleSent: '#123f38',
-      bubbleReceived: '#1b242b'
+      primary: '#00a884',
+      bg: '#0b141a',
+      header: '#1f2c34',
+      bubbleSent: '#005c4b',
+      bubbleReceived: '#202c33'
     },
     bgImage: 'default',
     onboardingStep: 0
@@ -231,11 +231,11 @@ function loadData() {
       botAvatarImage: 'resources/profile.png',
       theme: 'classic',
       customColors: {
-        primary: '#1f8f7a',
-        bg: '#0d1216',
-        header: '#182027',
-        bubbleSent: '#123f38',
-        bubbleReceived: '#1b242b'
+        primary: '#00a884',
+        bg: '#0b141a',
+        header: '#1f2c34',
+        bubbleSent: '#005c4b',
+        bubbleReceived: '#202c33'
       },
       bgImage: 'default',
       onboardingStep: 0
@@ -377,9 +377,37 @@ function hideTypingIndicator() {
 }
 
 // Append Option Buttons to the Chat
-function appendOptionButtons(options, horizontal = false, delay = 0) {
+// Helper to execute action by type when restoring buttons
+function triggerActionByType(actionType, payload) {
+  if (actionType === 'selectCourse') {
+    selectCourse(payload);
+  } else if (actionType === 'logAbsence') {
+    logAbsenceForSubjectIds(payload);
+  } else if (actionType === 'logPresence') {
+    logPresence();
+  }
+}
+
+// Append Option Buttons to the Chat
+function appendOptionButtons(options, horizontal = false, delay = 0, skipSave = false) {
+  if (!skipSave) {
+    state.activeOptions = {
+      options: options.map(opt => ({
+        text: opt.text,
+        class: opt.class,
+        actionType: opt.actionType,
+        payload: opt.payload || null
+      })),
+      horizontal: horizontal
+    };
+    saveData();
+  }
+
   return queueBotAction(() => new Promise(resolve => {
     setTimeout(() => {
+      const existing = chatMessages.querySelector('.chat-action-buttons');
+      if (existing) existing.remove();
+
       const container = document.createElement('div');
       container.className = 'chat-action-buttons';
       if (horizontal) {
@@ -392,9 +420,16 @@ function appendOptionButtons(options, horizontal = false, delay = 0) {
         btn.innerText = opt.text;
         btn.onclick = () => {
           container.remove();
+          state.activeOptions = null;
+          saveData();
+
           // Render user's choice as a message
           appendMessage(opt.text, true);
-          opt.action();
+          if (opt.action) {
+            opt.action();
+          } else if (opt.actionType) {
+            triggerActionByType(opt.actionType, opt.payload);
+          }
         };
         container.appendChild(btn);
       });
@@ -494,7 +529,7 @@ function generateVerdictReport(targetDay) {
     reportDetailsHTML += `
       <li class="schedule-item report-item ${freqClass}">
         <span class="schedule-subject">${sub.name}</span>
-        <span class="schedule-room">${newAbsences}/${maxAbsences} (${projectedFrequency.toFixed(1)}%)</span>
+        <span class="schedule-room">Atual: ${absences}/${maxAbsences} (${currentFrequency.toFixed(1)}%) &rarr; Se faltar: ${newAbsences}/${maxAbsences} (${projectedFrequency.toFixed(1)}%)</span>
       </li>
     `;
   });
@@ -554,14 +589,14 @@ function detectTargetDayFromMessage(message) {
 // Theme presets configurations
 const THEME_PRESETS = {
   classic: {
-    primary: '#1f8f7a',
-    bg: '#0d1216',
-    header: '#182027',
-    bubbleSent: '#123f38',
-    bubbleReceived: '#1b242b',
-    textMain: '#d8dee3',
-    accent: '#6f8f87',
-    success: '#4f8f7d'
+    primary: '#00a884',
+    bg: '#0b141a',
+    header: '#1f2c34',
+    bubbleSent: '#005c4b',
+    bubbleReceived: '#202c33',
+    textMain: '#e9edef',
+    accent: '#00a884',
+    success: '#00a884'
   },
   ocean: {
     primary: '#35579b',
@@ -570,8 +605,8 @@ const THEME_PRESETS = {
     bubbleSent: '#172742',
     bubbleReceived: '#1a2432',
     textMain: '#d8e1f0',
-    accent: '#6e89b6',
-    success: '#5f86b8'
+    accent: '#35579b',
+    success: '#35579b'
   },
   grape: {
     primary: '#b04cff',
@@ -580,8 +615,8 @@ const THEME_PRESETS = {
     bubbleSent: '#6f1fd1',
     bubbleReceived: '#2a0f44',
     textMain: '#f0e7ff',
-    accent: '#d18bff',
-    success: '#b56bff'
+    accent: '#b04cff',
+    success: '#b04cff'
   },
   rose: {
     primary: '#c8192e',
@@ -590,8 +625,8 @@ const THEME_PRESETS = {
     bubbleSent: '#8b0f22',
     bubbleReceived: '#240609',
     textMain: '#ffe9ea',
-    accent: '#d45c68',
-    success: '#bf3a4a'
+    accent: '#c8192e',
+    success: '#c8192e'
   }
 };
 
@@ -627,7 +662,7 @@ function applyThemeSettings() {
     root.style.setProperty('--bg-color', colors.bg);
     root.style.setProperty('--header-bg', colors.header);
     root.style.setProperty('--input-bg', lightenDarkenColor(colors.header, 10));
-    root.style.setProperty('--bubble-sent', colors.primary);
+    root.style.setProperty('--bubble-sent', colors.bubbleSent || colors.primary);
     root.style.setProperty('--bubble-received', colors.bubbleReceived);
     root.style.setProperty('--whatsapp-green', colors.primary);
     root.style.setProperty('--whatsapp-green-hover', lightenDarkenColor(colors.primary, -15));
@@ -674,9 +709,9 @@ function processUserMessage(messageText) {
       
       // Show course selection buttons
       appendOptionButtons([
-        { text: 'Licenciatura em Computação', class: 'primary', action: () => selectCourse('licenciatura_computacao') },
-        { text: 'Bacharelado em Design', class: 'primary', action: () => selectCourse('design') },
-        { text: 'Outro', class: 'primary', action: () => selectCourse('other') }
+        { text: 'Licenciatura em Computação', class: 'primary', actionType: 'selectCourse', payload: 'licenciatura_computacao', action: () => selectCourse('licenciatura_computacao') },
+        { text: 'Bacharelado em Design', class: 'primary', actionType: 'selectCourse', payload: 'design', action: () => selectCourse('design') },
+        { text: 'Outro', class: 'primary', actionType: 'selectCourse', payload: 'other', action: () => selectCourse('other') }
       ], false, 1200);
       return;
     }
@@ -705,8 +740,15 @@ function processUserMessage(messageText) {
       applyThemeSettings();
       
       appendBotMessage(`Pronto! Tudo configurado! 🎉`);
+      appendBotMessage('Não esqueça de informar suas faltas atuais com base no SUAP através das configurações para que eu possa calcular corretamente sua frequência!');
       appendBotMessage('Quando quiser saber seus horários ou faltas é só me informar o dia da semana desejado!');
-      appendBotMessage('⚠️ Não esqueça de configurar suas faltas atuais no SUAP através das configurações (⚙️) para que eu possa calcular corretamente sua frequência!');
+      return;
+    }
+    
+    // If active option buttons (like Sim/Não) are present on screen, require button selection
+    const activeOptionButtons = chatMessages.querySelector('.chat-action-buttons');
+    if (activeOptionButtons) {
+      appendBotMessage('Por favor, selecione uma opção usando os botões acima.');
       return;
     }
     
@@ -740,8 +782,8 @@ function processUserMessage(messageText) {
     
     appendBotMessage(`Você vai faltar às aulas ${dayReference}?`);
     appendOptionButtons([
-      { text: 'Sim', class: 'danger', action: () => logAbsenceForSubjectIds(report.subjectIdsToAbsence) },
-      { text: 'Não', class: 'primary', action: () => logPresence() }
+      { text: 'Sim', class: 'danger', actionType: 'logAbsence', payload: report.subjectIdsToAbsence, action: () => logAbsenceForSubjectIds(report.subjectIdsToAbsence) },
+      { text: 'Não', class: 'primary', actionType: 'logPresence', action: () => logPresence() }
     ], true, 1200);
     
   }, 1200);
@@ -1307,7 +1349,16 @@ messageInput.onkeypress = (e) => {
 
 // Restore saved chat messages
 function restoreMessages() {
-  if (!state.messages || state.messages.length === 0) return;
+  if (!state.messages || state.messages.length === 0) {
+    if (state.activeOptions && state.activeOptions.options) {
+      const restoredOptions = state.activeOptions.options.map(opt => ({
+        ...opt,
+        action: () => triggerActionByType(opt.actionType, opt.payload)
+      }));
+      appendOptionButtons(restoredOptions, state.activeOptions.horizontal, 0, true);
+    }
+    return;
+  }
   // Keep the day divider, append messages after it
   state.messages.forEach(msg => {
     appendMessage(msg.text, msg.isSent, msg.customHTML || null, true);
@@ -1319,14 +1370,24 @@ function restoreMessages() {
       if (ts && msg.time) ts.innerText = msg.time;
     }
   });
+
+  // Restore active option buttons if present
+  if (state.activeOptions && state.activeOptions.options) {
+    const restoredOptions = state.activeOptions.options.map(opt => ({
+      ...opt,
+      action: () => triggerActionByType(opt.actionType, opt.payload)
+    }));
+    appendOptionButtons(restoredOptions, state.activeOptions.horizontal, 0, true);
+  }
 }
 
 // Clear chat history
 function clearHistory() {
   state.messages = [];
+  state.activeOptions = null;
   saveData();
   // Remove all bubbles but keep the day divider
-  const bubbles = chatMessages.querySelectorAll('.message-bubble, .typing-bubble');
+  const bubbles = chatMessages.querySelectorAll('.message-bubble, .typing-bubble, .chat-action-buttons');
   bubbles.forEach(b => b.remove());
 }
 
