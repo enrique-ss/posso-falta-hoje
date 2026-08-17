@@ -107,6 +107,9 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+  overflow: hidden;
+  flex: 1;
 }
 
 .icon-btn {
@@ -142,12 +145,17 @@ body {
 .contact-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .contact-name {
   font-size: 16px;
   font-weight: 600;
   color: var(--header-text, var(--text-main));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .contact-status {
@@ -161,6 +169,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .chat-header .icon-btn {
