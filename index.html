@@ -53,7 +53,7 @@
       </button>
     </footer>
 
-    <!-- Settings Drawer (Matérias & Grade) -->
+    <!-- Settings Drawer (Disciplinas & Grade) -->
     <div id="settings-drawer" class="drawer-overlay">
       <div class="drawer-content">
         <div class="drawer-header">
@@ -65,8 +65,8 @@
         
         <div class="drawer-tabs">
           <button id="tab-subjects" class="tab-btn active">Disciplinas</button>
-          <button id="tab-schedule" class="tab-btn">Grade Horária</button>
-          <button id="tab-appearance" class="tab-btn">Aparência</button>
+          <button id="tab-schedule" class="tab-btn">Horários</button>
+          <button id="tab-appearance" class="tab-btn">Perfil</button>
         </div>
 
         <div class="drawer-body">
@@ -109,51 +109,27 @@
             </div>
 
             <div class="form-group">
-              <label for="cfg-bot-avatar-file">Foto de Avatar do Bot <span style="color: var(--text-muted); font-weight: 400;">(recomendado: 200×200 px)</span></label>
+              <label for="cfg-bot-avatar-file">Foto de Avatar do Bot</label>
               <input type="file" id="cfg-bot-avatar-file" accept="image/*" style="background-color: var(--input-bg); border: var(--border-glass); border-radius: 8px; padding: 10px 12px; color: var(--text-main); font-family: var(--font-family); font-size: 14px; outline: none; width: 100%;">
             </div>
 
             <div class="form-group">
               <label for="cfg-theme-preset">Tema de Cores</label>
               <select id="cfg-theme-preset" style="background-color: var(--input-bg); border: var(--border-glass); border-radius: 8px; padding: 10px 12px; color: var(--text-main); font-family: var(--font-family); font-size: 14px; outline: none;">
-                <option value="classic">Clássico (WhatsApp Verde)</option>
-                <option value="ocean">Azul Oceano</option>
-                <option value="grape">Roxo Neon</option>
-                <option value="rose">Rosa Choque</option>
-                <option value="sunset">Pôr do Sol</option>
-                <option value="custom">Personalizado</option>
+                <option value="classic">Clássico</option>
+                <option value="ocean">Meia Noite</option>
+                <option value="grape">Elegante</option>
+                <option value="rose">Vampírico</option>
               </select>
             </div>
 
-            <!-- Custom Color Controls -->
-            <div id="custom-color-controls" style="display: none; flex-direction: column; gap: 10px; margin-top: 10px; border: 1px solid rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; background-color: rgba(0,0,0,0.15);">
-              <h4 style="font-size: 13px; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Cores Personalizadas:</h4>
-              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
-                <span>Cor Principal/Tema:</span>
-                <input type="color" id="cfg-color-primary" value="#00a884" style="border: none; width: 40px; height: 30px; cursor: pointer; background: none;">
-              </div>
-              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
-                <span>Fundo do Chat:</span>
-                <input type="color" id="cfg-color-bg" value="#0b141a" style="border: none; width: 40px; height: 30px; cursor: pointer; background: none;">
-              </div>
-              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
-                <span>Cabeçalho / Input:</span>
-                <input type="color" id="cfg-color-header" value="#1f2c34" style="border: none; width: 40px; height: 30px; cursor: pointer; background: none;">
-              </div>
-              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
-                <span>Balão Enviado:</span>
-                <input type="color" id="cfg-color-sent" value="#005c4b" style="border: none; width: 40px; height: 30px; cursor: pointer; background: none;">
-              </div>
-              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
-                <span>Balão Recebido:</span>
-                <input type="color" id="cfg-color-received" value="#202c33" style="border: none; width: 40px; height: 30px; cursor: pointer; background: none;">
-              </div>
-            </div>
 
 
 
-
-            <button id="btn-save-appearance" class="btn-primary" style="margin-top: 18px;">
+            <button id="btn-reset-account" class="btn-secondary" style="margin-top: 18px; background-color: #ef4444; border-color: #ef4444; width: 100%;">
+              Resetar Conta
+            </button>
+            <button id="btn-save-appearance" class="btn-primary" style="margin-top: 10px;">
               Salvar Alterações
             </button>
             <div class="drawer-footer">
@@ -184,7 +160,7 @@
           <div class="form-group">
             <label for="subject-absences">Faltas Atuais</label>
             <input type="number" id="subject-absences" min="0" value="0" required placeholder="Ex: 2">
-            <small>Quantidade de faltas que você já possui nesta matéria.</small>
+            <small>Quantidade de faltas que você já possui nesta disciplina.</small>
           </div>
 
           <div class="modal-actions">

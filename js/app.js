@@ -161,16 +161,10 @@ const panelAppearance = document.getElementById('panel-appearance');
 const cfgUserName = document.getElementById('cfg-user-name');
 const cfgBotName = document.getElementById('cfg-bot-name');
 const cfgBotAvatar = document.getElementById('cfg-bot-avatar');
-const cfgThemePreset = document.getElementById('cfg-theme-preset');
-const customColorControls = document.getElementById('custom-color-controls');
-const cfgColorPrimary = document.getElementById('cfg-color-primary');
-const cfgColorBg = document.getElementById('cfg-color-bg');
-const cfgColorHeader = document.getElementById('cfg-color-header');
-const cfgColorSent = document.getElementById('cfg-color-sent');
-const cfgColorReceived = document.getElementById('cfg-color-received');
-
 const cfgBotAvatarFile = document.getElementById('cfg-bot-avatar-file');
+const cfgThemePreset = document.getElementById('cfg-theme-preset');
 const btnSaveAppearance = document.getElementById('btn-save-appearance');
+const btnResetAccount = document.getElementById('btn-reset-account');
 
 // Temporary variables for uploaded images
 let tempAvatarBase64 = '';
@@ -319,6 +313,17 @@ function appendMessage(text, isSent, customHTML = null, skipSave = false) {
   return bubble;
 }
 
+// Append Bot Message with typing effect
+function appendBotMessage(text, customHTML = null, skipSave = false) {
+  showTypingIndicator();
+  const delay = 500 + Math.random() * 1000; // Random delay between 500-1500ms
+  
+  setTimeout(() => {
+    hideTypingIndicator();
+    appendMessage(text, false, customHTML, skipSave);
+  }, delay);
+}
+
 // Scroll chat to bottom
 function scrollToBottom() {
   setTimeout(() => {
@@ -389,7 +394,7 @@ function generateVerdictReport(targetDay) {
   if (state.subjects.length === 0) {
     return {
       success: false,
-      message: 'Epa, calma aí! Você ainda não cadastrou nenhuma matéria. Configura lá nas opções no topo direito ⚙️ antes de me perguntar!'
+      message: 'Epa, calma aí! Você ainda não cadastrou nenhuma disciplina. Configura lá nas opções no topo direito ⚙️ antes de me perguntar!'
     };
   }
 
@@ -410,7 +415,7 @@ function generateVerdictReport(targetDay) {
       success: true,
       canSkip: true,
       noClasses: true,
-      message: `Não há aulas cadastradas para ${WEEKDAYS[targetDay]} na sua grade horária. Aproveite seu dia de folga!`
+      message: `Não há aulas cadastradas para ${WEEKDAYS[targetDay]} nos seus horários. Aproveite seu dia de folga!`
     };
   }
   
@@ -427,7 +432,7 @@ function generateVerdictReport(targetDay) {
       <div class="schedule-item">
         <div class="schedule-time">${slot.time}</div>
         <div class="schedule-subject">${sub.name}</div>
-        <div class="schedule-room">Sala ${slot.room}</div>
+        <div class="schedule-room">${slot.room}</div>
       </div>
     `;
   });
@@ -473,8 +478,8 @@ function generateVerdictReport(targetDay) {
       <li class="report-item ${freqClass}">
         <span class="report-item-name">${sub.name}</span>
         <div class="report-item-stats">
-          <span>Atual: <strong>${absences}/${maxAbsences}</strong> faltas &middot; ${currentFrequency.toFixed(1)}%</span>
-          <span class="report-item-projected">Se faltar: <strong>${newAbsences}/${maxAbsences}</strong> &middot; ${projectedFrequency.toFixed(1)}%</span>
+          <span>Atual: <strong>${absences}/${maxAbsences}</strong> faltas (${currentFrequency.toFixed(1)}%)</span>
+          <span class="report-item-projected">Se faltar: <strong>${newAbsences}/${maxAbsences}</strong> (${projectedFrequency.toFixed(1)}%)</span>
         </div>
       </li>
     `;
@@ -482,7 +487,7 @@ function generateVerdictReport(targetDay) {
   
   const verdictHTML = `
     <div class="schedule-container">
-      <div class="schedule-title">Grade Horária</div>
+      <div class="schedule-title">Horários de ${WEEKDAYS[targetDay]}</div>
       <div class="schedule-list">
         ${scheduleHTML}
       </div>
@@ -543,36 +548,28 @@ const THEME_PRESETS = {
     textMain: '#e9edef'
   },
   ocean: {
-    primary: '#3b82f6',
-    bg: '#0f172a',
-    header: '#1e293b',
-    bubbleSent: '#1d4ed8',
-    bubbleReceived: '#334155',
+    primary: '#1e3a8a',
+    bg: '#020617',
+    header: '#0f172a',
+    bubbleSent: '#172554',
+    bubbleReceived: '#1e293b',
     textMain: '#f8fafc'
   },
   grape: {
-    primary: '#a855f7',
-    bg: '#180f2a',
-    header: '#251642',
-    bubbleSent: '#7e22ce',
-    bubbleReceived: '#3b2269',
-    textMain: '#fae8ff'
+    primary: '#7c3aed',
+    bg: '#0f0518',
+    header: '#1e1b4b',
+    bubbleSent: '#5b21b6',
+    bubbleReceived: '#2e1065',
+    textMain: '#faf5ff'
   },
   rose: {
-    primary: '#ec4899',
-    bg: '#1c0a13',
-    header: '#2e1222',
-    bubbleSent: '#be185d',
-    bubbleReceived: '#4c1d3b',
-    textMain: '#fdf2f8'
-  },
-  sunset: {
-    primary: '#f97316',
-    bg: '#1a0d05',
-    header: '#2c160b',
-    bubbleSent: '#c2410c',
-    bubbleReceived: '#47230f',
-    textMain: '#fff7ed'
+    primary: '#dc2626',
+    bg: '#0a0202',
+    header: '#1a0505',
+    bubbleSent: '#7f1d1d',
+    bubbleReceived: '#290505',
+    textMain: '#fef2f2'
   }
 };
 
@@ -599,8 +596,8 @@ function applyThemeSettings() {
   }
   
   let colors = THEME_PRESETS[settings.theme];
-  if (settings.theme === 'custom' && settings.customColors) {
-    colors = settings.customColors;
+  if (!colors) {
+    colors = THEME_PRESETS.classic;
   }
   
   if (colors) {
@@ -648,8 +645,8 @@ function processUserMessage(messageText) {
       state.userSettings.userName = messageText.trim();
       state.userSettings.onboardingStep = 2;
       saveData();
-      appendMessage(`Prazer em te conhecer, ${state.userSettings.userName}! 😊`, false);
-      appendMessage('Qual é o seu curso?', false);
+      appendBotMessage(`Prazer em te conhecer, ${state.userSettings.userName}! 😊`);
+      appendBotMessage('Qual é o seu curso?');
       
       // Show course selection buttons
       appendOptionButtons([
@@ -662,7 +659,7 @@ function processUserMessage(messageText) {
     
     if (state.userSettings.onboardingStep === 2) {
       // This step is handled by button clicks, not text input
-      appendMessage('Por favor, selecione um curso usando os botões acima.', false);
+      appendBotMessage('Por favor, selecione um curso usando os botões acima.');
       return;
     }
     
@@ -683,41 +680,41 @@ function processUserMessage(messageText) {
       
       applyThemeSettings();
       
-      appendMessage(`Pronto! Tudo configurado! 🎉`, false);
-      appendMessage('Quando quiser saber seus horários ou faltas é só me informar o dia da semana desejado!', false);
-      appendMessage('⚠️ Não esqueça de configurar suas faltas atuais no SUAP através das configurações (⚙️) para que eu possa calcular corretamente sua frequência!', false);
+      appendBotMessage(`Pronto! Tudo configurado! 🎉`);
+      appendBotMessage('Quando quiser saber seus horários ou faltas é só me informar o dia da semana desejado!');
+      appendBotMessage('⚠️ Não esqueça de configurar suas faltas atuais no SUAP através das configurações (⚙️) para que eu possa calcular corretamente sua frequência!');
       return;
     }
     
     const targetDay = detectTargetDayFromMessage(messageText);
     
     if (targetDay === null) {
-      appendMessage('Desculpe, não entendi muito bem. 😅', false);
-      appendMessage('Por favor, digite sua pergunta informando o dia que deseja consultar.', false);
+      appendBotMessage('Desculpe, não entendi muito bem. 😅');
+      appendBotMessage('Por favor, digite sua pergunta informando o dia que deseja consultar.');
       return;
     }
     
     const report = generateVerdictReport(targetDay);
     
     if (!report.success) {
-      appendMessage(report.message, false);
+      appendBotMessage(report.message);
       return;
     }
     
     if (report.noClasses) {
-      appendMessage(report.message, false);
+      appendBotMessage(report.message);
       return;
     }
     
     // Show report
-    appendMessage('', false, report.html);
+    appendBotMessage('', report.html);
     
     // Ask if user will skip classes (dynamic question based on day)
     const dayName = WEEKDAYS[targetDay];
     const isToday = targetDay === new Date().getDay();
     const dayReference = isToday ? 'hoje' : dayName.toLowerCase();
     
-    appendMessage(`Você vai faltar às aulas ${dayReference}?`, false);
+    appendBotMessage(`Você vai faltar às aulas ${dayReference}?`);
     appendOptionButtons([
       { text: 'Sim', class: 'danger', action: () => logAbsenceForSubjectIds(report.subjectIdsToAbsence) },
       { text: 'Não', class: 'primary', action: () => logPresence() }
@@ -752,9 +749,9 @@ function logAbsenceForSubjectIds(subjectIds) {
     saveData();
     renderSubjects();
     
-    appendMessage(`Falta registrada com sucesso!`, false);
-    appendMessage(`${updatedNames.join('\n ')}`, false);
-    appendMessage('Sua frequência foi atualizada no painel!', false);
+    appendBotMessage(`Falta registrada com sucesso!`);
+    appendBotMessage(`${updatedNames.join('\n ')}`);
+    appendBotMessage('Sua frequência foi atualizada no painel!');
   }, 800);
 }
 
@@ -763,7 +760,7 @@ function logPresence() {
   showTypingIndicator();
   setTimeout(() => {
     hideTypingIndicator();
-    appendMessage(`Perfeito! Bons estudos e boa aula! 📚✨`, false);
+    appendBotMessage(`Perfeito! Bons estudos e boa aula! 📚✨`);
   }, 800);
 }
 
@@ -781,14 +778,14 @@ function selectCourse(courseId) {
     state.userSettings.onboardingStep = 3;
     saveData();
     
-    appendMessage(`Entendido! Você configurará suas disciplinas e grade horária manualmente.`, false);
-    appendMessage('E como você gostaria de me chamar?', false);
+    appendBotMessage(`Entendido! Você configurará suas disciplinas e horários manualmente.`);
+    appendBotMessage('E como você gostaria de me chamar?');
     return;
   }
 
   const courseData = COURSE_DATA[courseId];
   if (!courseData) {
-    appendMessage('Erro ao carregar dados do curso. Por favor, tente novamente.', false);
+    appendBotMessage('Erro ao carregar dados do curso. Por favor, tente novamente.');
     return;
   }
 
@@ -914,8 +911,8 @@ function selectCourse(courseId) {
   state.userSettings.onboardingStep = 3;
   saveData();
   
-  appendMessage(`Ótimo! Configurei as disciplinas e a grade horária para ${courseData.name}. 📚`, false);
-  appendMessage('E como você gostaria de me chamar?', false);
+  appendBotMessage(`Ótimo! Configurei as disciplinas e os horários para ${courseData.name}. 📚`);
+  appendBotMessage('E como você gostaria de me chamar?');
 }
 
 // Informal greeting variations
@@ -942,21 +939,15 @@ function triggerGreeting() {
     if (state.userSettings && state.userSettings.onboardingStep < 4) {
       state.userSettings.onboardingStep = 1;
       saveData();
-      appendMessage("Antes de começarmos, como você gostaria de ser chamado(a)?", false);
+      appendBotMessage("Antes de começarmos, como você gostaria de ser chamado(a)?");
     } else {
       const userNameStr = (state.userSettings && state.userSettings.userName) ? `, ${state.userSettings.userName}` : '';
       const customGreetings = INFORMAL_GREETINGS.map(g => {
-        return g.replace("parceiro", (state.userSettings && state.userSettings.userName) || "parceiro")
-                .replace("Eaí, de boa?", `Eaí ${(state.userSettings && state.userSettings.userName) || 'de boa'}, tudo bem?`)
-                .replace("Eaí, ta afim", `Eaí${userNameStr}, tá a fim`)
-                .replace("E aí, vai encarar", `E aí${userNameStr}, vai encarar`)
-                .replace("Salve!", `Salve${userNameStr}!`)
-                .replace("Fala aí!", `Fala aí${userNameStr}!`)
-                .replace("Epa!", `Epa${userNameStr}!`);
+        return g.replace("?", `${userNameStr}?`);
       });
       const randomIndex = Math.floor(Math.random() * customGreetings.length);
       const greeting = customGreetings[randomIndex];
-      appendMessage(greeting, false);
+      appendBotMessage(greeting);
     }
   }, 1000);
 }
@@ -1002,29 +993,7 @@ function renderAppearanceConfig() {
   
   cfgBotAvatarFile.value = '';
   tempAvatarBase64 = '';
-  
-  if (settings.theme === 'custom') {
-    customColorControls.style.display = 'flex';
-    if (settings.customColors) {
-      cfgColorPrimary.value = settings.customColors.primary || '#00a884';
-      cfgColorBg.value = settings.customColors.bg || '#0b141a';
-      cfgColorHeader.value = settings.customColors.header || '#1f2c34';
-      cfgColorSent.value = settings.customColors.sent || '#005c4b';
-      cfgColorReceived.value = settings.customColors.received || '#202c33';
-    }
-  } else {
-    customColorControls.style.display = 'none';
-  }
 }
-
-// Appearance Event Bindings
-cfgThemePreset.onchange = () => {
-  if (cfgThemePreset.value === 'custom') {
-    customColorControls.style.display = 'flex';
-  } else {
-    customColorControls.style.display = 'none';
-  }
-};
 
 cfgBotAvatarFile.onchange = (e) => {
   const file = e.target.files[0];
@@ -1049,21 +1018,16 @@ btnSaveAppearance.onclick = () => {
     state.userSettings.botAvatarImage = tempAvatarBase64;
   }
   
-  
-  if (cfgThemePreset.value === 'custom') {
-    state.userSettings.customColors = {
-      primary: cfgColorPrimary.value,
-      bg: cfgColorBg.value,
-      header: cfgColorHeader.value,
-      bubbleSent: cfgColorSent.value,
-      bubbleReceived: cfgColorReceived.value,
-      textMain: '#e9edef'
-    };
-  }
-  
   saveData();
   applyThemeSettings();
   closeSettings();
+};
+
+btnResetAccount.onclick = () => {
+  if (confirm('Tem certeza que deseja resetar sua conta? Isso apagará todas as suas disciplinas, horários e configurações.')) {
+    localStorage.clear();
+    location.reload();
+  }
 };
 
 // Settings Drawers Open/Close
@@ -1248,7 +1212,7 @@ function renderScheduleConfig() {
         slotEl.style.borderRadius = '6px';
         
         slotEl.innerHTML = `
-          <span style="font-size: 13px;"><strong>${slot.time}</strong> - ${sub.name}${slot.room ? ` (Sala ${slot.room})` : ''}</span>
+          <span style="font-size: 13px;"><strong>${slot.time}</strong> - ${sub.name}${slot.room ? ` (${slot.room})` : ''}</span>
           <button class="action-btn delete" style="padding: 2px;" aria-label="Remover">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
           </button>
