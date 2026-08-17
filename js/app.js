@@ -1,7 +1,25 @@
 // Application State
 let state = {
   subjects: [],
-  schedule: [] // Array of { id, subjectId, day, time }
+  schedule: [], // Array of { id, subjectId, day, time }
+  userSettings: {
+    userName: '',
+    botName: '',
+    botAvatar: '🤖',
+    botAvatarType: 'text', // 'text' or 'image'
+    botAvatarImage: '',
+    theme: 'classic',
+    customColors: {
+      primary: '#00a884',
+      bg: '#0b141a',
+      header: '#1f2c34',
+      bubbleSent: '#005c4b',
+      bubbleReceived: '#202c33'
+    },
+    bgImage: 'default',
+    bgImageFile: '',
+    onboardingStep: 0
+  }
 };
 
 // Day names mapping
@@ -44,6 +62,63 @@ const scheduleDaySelect = document.getElementById('schedule-day');
 const scheduleTimeInput = document.getElementById('schedule-time');
 const scheduleRoomInput = document.getElementById('schedule-room');
 
+// Appearance Elements
+const tabAppearance = document.getElementById('tab-appearance');
+const panelAppearance = document.getElementById('panel-appearance');
+const cfgUserName = document.getElementById('cfg-user-name');
+const cfgBotName = document.getElementById('cfg-bot-name');
+const cfgBotAvatar = document.getElementById('cfg-bot-avatar');
+const cfgThemePreset = document.getElementById('cfg-theme-preset');
+const customColorControls = document.getElementById('custom-color-controls');
+const cfgColorPrimary = document.getElementById('cfg-color-primary');
+const cfgColorBg = document.getElementById('cfg-color-bg');
+const cfgColorHeader = document.getElementById('cfg-color-header');
+const cfgColorSent = document.getElementById('cfg-color-sent');
+const cfgColorReceived = document.getElementById('cfg-color-received');
+const cfgBgImageFile = document.getElementById('cfg-bg-image-file');
+const cfgBotAvatarFile = document.getElementById('cfg-bot-avatar-file');
+const btnSaveAppearance = document.getElementById('btn-save-appearance');
+
+// Temporary variables for uploaded images
+let tempAvatarBase64 = '';
+let tempBgImageBase64 = '';
+
+// Helper to compress and resize images
+function compressAndResizeImage(file, maxWidth, maxHeight, callback) {
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      callback(dataUrl);
+    };
+    img.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 // Load Data from LocalStorage
 function loadData() {
   const savedState = localStorage.getItem('posso_faltar_hoje_state');
@@ -57,6 +132,34 @@ function loadData() {
     } catch (e) {
       console.error('Error parsing saved state', e);
     }
+  }
+  
+  // Ensure userSettings exists
+  if (!state.userSettings) {
+    state.userSettings = {
+      userName: '',
+      botName: '',
+      botAvatar: '🤖',
+      botAvatarType: 'text',
+      botAvatarImage: '',
+      theme: 'classic',
+      customColors: {
+        primary: '#00a884',
+        bg: '#0b141a',
+        header: '#1f2c34',
+        bubbleSent: '#005c4b',
+        bubbleReceived: '#202c33'
+      },
+      bgImage: 'default',
+      bgImageFile: '',
+      onboardingStep: 0
+    };
+  } else if (state.userSettings.onboardingStep < 3) {
+    // Reset cached defaults if onboarding was not completed
+    state.userSettings.botName = '';
+    state.userSettings.botAvatar = '🤖';
+    state.userSettings.botAvatarType = 'text';
+    state.userSettings.botAvatarImage = '';
   }
 }
 
@@ -306,12 +409,154 @@ function detectTargetDayFromMessage(message) {
   return null;
 }
 
+// Theme presets configurations
+const THEME_PRESETS = {
+  classic: {
+    primary: '#00a884',
+    bg: '#0b141a',
+    header: '#1f2c34',
+    bubbleSent: '#005c4b',
+    bubbleReceived: '#202c33',
+    textMain: '#e9edef'
+  },
+  ocean: {
+    primary: '#3b82f6',
+    bg: '#0f172a',
+    header: '#1e293b',
+    bubbleSent: '#1d4ed8',
+    bubbleReceived: '#334155',
+    textMain: '#f8fafc'
+  },
+  grape: {
+    primary: '#a855f7',
+    bg: '#180f2a',
+    header: '#251642',
+    bubbleSent: '#7e22ce',
+    bubbleReceived: '#3b2269',
+    textMain: '#fae8ff'
+  },
+  rose: {
+    primary: '#ec4899',
+    bg: '#1c0a13',
+    header: '#2e1222',
+    bubbleSent: '#be185d',
+    bubbleReceived: '#4c1d3b',
+    textMain: '#fdf2f8'
+  },
+  sunset: {
+    primary: '#f97316',
+    bg: '#1a0d05',
+    header: '#2c160b',
+    bubbleSent: '#c2410c',
+    bubbleReceived: '#47230f',
+    textMain: '#fff7ed'
+  }
+};
+
+function applyThemeSettings() {
+  if (!state.userSettings) return;
+  const settings = state.userSettings;
+  
+  const nameDisplay = document.getElementById('bot-name-display');
+  const avatarText = document.getElementById('bot-avatar-text');
+  const botAvatar = document.getElementById('bot-avatar');
+  
+  if (nameDisplay) nameDisplay.innerText = settings.botName || 'Gerenciador de Faltas';
+  
+  if (botAvatar) {
+    if (settings.botAvatarType === 'image' && settings.botAvatarImage) {
+      botAvatar.style.backgroundImage = `url("${settings.botAvatarImage}")`;
+      botAvatar.style.backgroundSize = 'cover';
+      botAvatar.style.backgroundPosition = 'center';
+      if (avatarText) avatarText.innerText = '';
+    } else {
+      botAvatar.style.backgroundImage = 'none';
+      if (avatarText) avatarText.innerText = settings.botAvatar || '🤖';
+    }
+  }
+  
+  let colors = THEME_PRESETS[settings.theme];
+  if (settings.theme === 'custom' && settings.customColors) {
+    colors = settings.customColors;
+  }
+  
+  if (colors) {
+    const root = document.documentElement;
+    root.style.setProperty('--bg-color', colors.bg);
+    root.style.setProperty('--header-bg', colors.header);
+    root.style.setProperty('--input-bg', lightenDarkenColor(colors.header, 10));
+    root.style.setProperty('--bubble-sent', colors.primary);
+    root.style.setProperty('--bubble-received', colors.bubbleReceived);
+    root.style.setProperty('--whatsapp-green', colors.primary);
+    root.style.setProperty('--whatsapp-green-hover', lightenDarkenColor(colors.primary, -15));
+    root.style.setProperty('--text-main', colors.textMain || '#e9edef');
+  }
+
+  const container = document.querySelector('.app-container');
+  if (container) {
+    if (settings.bgImageFile) {
+      container.style.setProperty('--chat-bg-image', `url("${settings.bgImageFile}")`);
+    } else {
+      container.style.setProperty('--chat-bg-image', `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath fill-rule='evenodd' d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm1-61c3.16 0 6-2.51 6-6s-2.84-6-6-6-6 2.51-6 6 2.84 6 6 6zm-.6 48c2.2 0 4-1.8 4-4s-1.8-4-4-4-4 1.8-4 4 1.8 4 4 4zM70 14c2.2 0 4-1.8 4-4s-1.8-4-4-4-4 1.8-4 4 1.8 4 4 4z'/%3E%3C/g%3E%3C/svg%3E")`);
+    }
+  }
+}
+
+function lightenDarkenColor(col, amt) {
+  let usePound = false;
+  if (col[0] == "#") {
+    col = col.slice(1);
+    usePound = true;
+  }
+  let num = parseInt(col, 16);
+  let r = (num >> 16) + amt;
+  if (r > 255) r = 255;
+  else if (r < 0) r = 0;
+  let b = ((num >> 8) & 0x00FF) + amt;
+  if (b > 255) b = 255;
+  else if (b < 0) b = 0;
+  let g = (num & 0x0000FF) + amt;
+  if (g > 255) g = 255;
+  else if (g < 0) g = 0;
+  return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
+}
+
 // Bot response processor
 function processUserMessage(messageText) {
   showTypingIndicator();
   
   setTimeout(() => {
     hideTypingIndicator();
+    
+    // Onboarding flow
+    if (state.userSettings.onboardingStep === 1) {
+      state.userSettings.userName = messageText.trim();
+      state.userSettings.onboardingStep = 2;
+      saveData();
+      appendMessage(`Prazer em te conhecer, ${state.userSettings.userName}! 😊\n\nE como você gostaria de me chamar?`, false);
+      return;
+    }
+    
+    if (state.userSettings.onboardingStep === 2) {
+      state.userSettings.botName = messageText.trim();
+      // Generate initials for avatar
+      let initials = 'IF';
+      const cleanName = state.userSettings.botName.replace(/[^a-zA-Z0-9 ]/g, '').trim();
+      const words = cleanName.split(/\s+/);
+      if (words.length >= 2) {
+        initials = (words[0][0] + words[1][0]).toUpperCase();
+      } else if (cleanName.length > 0) {
+        initials = cleanName.substring(0, 2).toUpperCase();
+      }
+      state.userSettings.botAvatar = initials;
+      state.userSettings.onboardingStep = 3;
+      saveData();
+      
+      applyThemeSettings();
+      
+      appendMessage(`Por favor, comece configurando suas disciplinas e horários no menu ⚙️ no canto superior direito para eu poder te ajudar com as faltas!`, false);
+      return;
+    }
     
     const targetDay = detectTargetDayFromMessage(messageText);
     
@@ -398,10 +643,25 @@ function triggerGreeting() {
   setTimeout(() => {
     hideTypingIndicator();
     
-    // Choose a random informal greeting
-    const randomIndex = Math.floor(Math.random() * INFORMAL_GREETINGS.length);
-    const greeting = INFORMAL_GREETINGS[randomIndex];
-    appendMessage(greeting, false);
+    if (state.userSettings && state.userSettings.onboardingStep < 3) {
+      state.userSettings.onboardingStep = 1;
+      saveData();
+      appendMessage("Antes de começarmos, como você gostaria de ser chamado(a)?", false);
+    } else {
+      const userNameStr = (state.userSettings && state.userSettings.userName) ? `, ${state.userSettings.userName}` : '';
+      const customGreetings = INFORMAL_GREETINGS.map(g => {
+        return g.replace("parceiro", (state.userSettings && state.userSettings.userName) || "parceiro")
+                .replace("Eaí, de boa?", `Eaí ${(state.userSettings && state.userSettings.userName) || 'de boa'}, tudo bem?`)
+                .replace("Eaí, ta afim", `Eaí${userNameStr}, tá a fim`)
+                .replace("E aí, vai encarar", `E aí${userNameStr}, vai encarar`)
+                .replace("Salve!", `Salve${userNameStr}!`)
+                .replace("Fala aí!", `Fala aí${userNameStr}!`)
+                .replace("Epa!", `Epa${userNameStr}!`);
+      });
+      const randomIndex = Math.floor(Math.random() * customGreetings.length);
+      const greeting = customGreetings[randomIndex];
+      appendMessage(greeting, false);
+    }
   }, 1000);
 }
 
@@ -409,21 +669,124 @@ function triggerGreeting() {
 tabSubjects.onclick = () => {
   tabSubjects.classList.add('active');
   tabSchedule.classList.remove('active');
+  tabAppearance.classList.remove('active');
   panelSubjects.classList.add('active');
   panelSchedule.classList.remove('active');
+  panelAppearance.classList.remove('active');
 };
 
 tabSchedule.onclick = () => {
   tabSchedule.classList.add('active');
   tabSubjects.classList.remove('active');
+  tabAppearance.classList.remove('active');
   panelSchedule.classList.add('active');
   panelSubjects.classList.remove('active');
+  panelAppearance.classList.remove('active');
   renderScheduleConfig();
+};
+
+tabAppearance.onclick = () => {
+  tabAppearance.classList.add('active');
+  tabSubjects.classList.remove('active');
+  tabSchedule.classList.remove('active');
+  panelAppearance.classList.add('active');
+  panelSubjects.classList.remove('active');
+  panelSchedule.classList.remove('active');
+  renderAppearanceConfig();
+};
+
+// Render Appearance config
+function renderAppearanceConfig() {
+  if (!state.userSettings) return;
+  const settings = state.userSettings;
+  
+  cfgUserName.value = settings.userName || '';
+  cfgBotName.value = settings.botName || '';
+  cfgThemePreset.value = settings.theme || 'classic';
+  
+  cfgBotAvatarFile.value = '';
+  cfgBgImageFile.value = '';
+  tempAvatarBase64 = '';
+  tempBgImageBase64 = '';
+  
+  if (settings.theme === 'custom') {
+    customColorControls.style.display = 'flex';
+    if (settings.customColors) {
+      cfgColorPrimary.value = settings.customColors.primary || '#00a884';
+      cfgColorBg.value = settings.customColors.bg || '#0b141a';
+      cfgColorHeader.value = settings.customColors.header || '#1f2c34';
+      cfgColorSent.value = settings.customColors.sent || '#005c4b';
+      cfgColorReceived.value = settings.customColors.received || '#202c33';
+    }
+  } else {
+    customColorControls.style.display = 'none';
+  }
+}
+
+// Appearance Event Bindings
+cfgThemePreset.onchange = () => {
+  if (cfgThemePreset.value === 'custom') {
+    customColorControls.style.display = 'flex';
+  } else {
+    customColorControls.style.display = 'none';
+  }
+};
+
+cfgBotAvatarFile.onchange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    compressAndResizeImage(file, 160, 160, (base64) => {
+      tempAvatarBase64 = base64;
+    });
+  }
+};
+
+cfgBgImageFile.onchange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    compressAndResizeImage(file, 800, 800, (base64) => {
+      tempBgImageBase64 = base64;
+    });
+  }
+};
+
+btnSaveAppearance.onclick = () => {
+  if (!state.userSettings) return;
+  
+  state.userSettings.userName = cfgUserName.value.trim();
+  state.userSettings.botName = cfgBotName.value.trim();
+  state.userSettings.theme = cfgThemePreset.value;
+  
+  if (tempAvatarBase64) {
+    state.userSettings.botAvatarType = 'image';
+    state.userSettings.botAvatarImage = tempAvatarBase64;
+  }
+  
+  if (tempBgImageBase64) {
+    state.userSettings.bgImageFile = tempBgImageBase64;
+  }
+  
+  if (cfgThemePreset.value === 'custom') {
+    state.userSettings.customColors = {
+      primary: cfgColorPrimary.value,
+      bg: cfgColorBg.value,
+      header: cfgColorHeader.value,
+      bubbleSent: cfgColorSent.value,
+      bubbleReceived: cfgColorReceived.value,
+      textMain: '#e9edef'
+    };
+  }
+  
+  saveData();
+  applyThemeSettings();
+  closeSettings();
 };
 
 // Settings Drawers Open/Close
 function openSettings() {
   settingsDrawer.classList.add('active');
+  // Default to Subjects tab on open
+  tabSubjects.click();
   renderSubjects();
 }
 
@@ -673,5 +1036,6 @@ messageInput.onkeypress = (e) => {
 // Init application
 window.onload = () => {
   loadData();
+  applyThemeSettings();
   triggerGreeting();
 };
