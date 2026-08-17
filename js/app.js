@@ -5,9 +5,9 @@ let state = {
   userSettings: {
     userName: '',
     botName: '',
-    botAvatar: '🤖',
-    botAvatarType: 'text', // 'text' or 'image'
-    botAvatarImage: '',
+    botAvatar: '',
+    botAvatarType: 'image', // 'text' or 'image'
+    botAvatarImage: 'resources/profile.png',
     theme: 'classic',
     customColors: {
       primary: '#00a884',
@@ -17,9 +17,9 @@ let state = {
       bubbleReceived: '#202c33'
     },
     bgImage: 'default',
-    bgImageFile: '',
     onboardingStep: 0
-  }
+  },
+  messages: [] // { text, isSent, customHTML, time }
 };
 
 // Day names mapping
@@ -75,13 +75,13 @@ const cfgColorBg = document.getElementById('cfg-color-bg');
 const cfgColorHeader = document.getElementById('cfg-color-header');
 const cfgColorSent = document.getElementById('cfg-color-sent');
 const cfgColorReceived = document.getElementById('cfg-color-received');
-const cfgBgImageFile = document.getElementById('cfg-bg-image-file');
+
 const cfgBotAvatarFile = document.getElementById('cfg-bot-avatar-file');
 const btnSaveAppearance = document.getElementById('btn-save-appearance');
 
 // Temporary variables for uploaded images
 let tempAvatarBase64 = '';
-let tempBgImageBase64 = '';
+
 
 // Helper to compress and resize images
 function compressAndResizeImage(file, maxWidth, maxHeight, callback) {
@@ -139,9 +139,9 @@ function loadData() {
     state.userSettings = {
       userName: '',
       botName: '',
-      botAvatar: '🤖',
-      botAvatarType: 'text',
-      botAvatarImage: '',
+      botAvatar: '',
+      botAvatarType: 'image',
+      botAvatarImage: 'resources/profile.png',
       theme: 'classic',
       customColors: {
         primary: '#00a884',
@@ -151,15 +151,20 @@ function loadData() {
         bubbleReceived: '#202c33'
       },
       bgImage: 'default',
-      bgImageFile: '',
       onboardingStep: 0
     };
   } else if (state.userSettings.onboardingStep < 3) {
     // Reset cached defaults if onboarding was not completed
     state.userSettings.botName = '';
-    state.userSettings.botAvatar = '🤖';
-    state.userSettings.botAvatarType = 'text';
-    state.userSettings.botAvatarImage = '';
+    state.userSettings.botAvatar = '';
+    state.userSettings.botAvatarType = 'image';
+    state.userSettings.botAvatarImage = 'resources/profile.png';
+  }
+
+
+  if (!state.userSettings.botAvatarImage) {
+    state.userSettings.botAvatarType = 'image';
+    state.userSettings.botAvatarImage = 'resources/profile.png';
   }
 }
 
@@ -193,7 +198,7 @@ function getDateStringForDay(dayIndex) {
 }
 
 // Append Chat Message
-function appendMessage(text, isSent, customHTML = null) {
+function appendMessage(text, isSent, customHTML = null, skipSave = false) {
   const bubble = document.createElement('div');
   bubble.className = `message-bubble ${isSent ? 'sent' : 'received'}`;
   
@@ -203,13 +208,21 @@ function appendMessage(text, isSent, customHTML = null) {
     bubble.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
   }
   
+  const timeStr = getCurrentTimeString();
   const time = document.createElement('span');
   time.className = 'time-stamp';
-  time.innerText = getCurrentTimeString();
+  time.innerText = timeStr;
   bubble.appendChild(time);
   
   chatMessages.appendChild(bubble);
   scrollToBottom();
+
+  if (!skipSave) {
+    if (!state.messages) state.messages = [];
+    state.messages.push({ text, isSent, customHTML: customHTML || null, time: timeStr });
+    saveData();
+  }
+
   return bubble;
 }
 
@@ -345,27 +358,19 @@ function generateVerdictReport(targetDay) {
     
     reportDetailsHTML += `
       <li class="report-item ${freqClass}">
-        <div class="report-item-title">
-          <span>${sub.name}</span>
-        </div>
-        <div>Faltas atuais: <strong>${absences}/${maxAbsences}</strong> (${currentFrequency.toFixed(1)}%)</div>
-        <div style="font-size: 12px; margin-top: 3px; color: var(--text-muted);">
-          Se faltar nesse dia: <strong>${newAbsences}/${maxAbsences}</strong> (${projectedFrequency.toFixed(1)}%)
+        <span class="report-item-name">${sub.name}</span>
+        <div class="report-item-stats">
+          <span>Atual: <strong>${absences}/${maxAbsences}</strong> faltas &middot; ${currentFrequency.toFixed(1)}%</span>
+          <span class="report-item-projected">Se faltar: <strong>${newAbsences}/${maxAbsences}</strong> &middot; ${projectedFrequency.toFixed(1)}%</span>
         </div>
       </li>
     `;
   });
   
-  const verdictClass = canSkipAll ? 'verdict-yes' : 'verdict-no';
-  const verdictText = canSkipAll 
-    ? `✅ SIM, você pode faltar!` 
-    : `❌ NÃO, melhor ir para a aula!`;
-  
   const verdictHTML = `
-    <div class="report-title">Relatório de Faltas</div>
-    <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">${getDateStringForDay(targetDay)}</div>
-    <div class="report-verdict ${verdictClass}">
-      ${verdictText}
+    <div class="report-header">
+      <span class="report-label">Relatório de Faltas</span>
+      <span class="report-date">${getDateStringForDay(targetDay)}</span>
     </div>
     <ul class="report-details">
       ${reportDetailsHTML}
@@ -492,14 +497,6 @@ function applyThemeSettings() {
     root.style.setProperty('--text-main', colors.textMain || '#e9edef');
   }
 
-  const container = document.querySelector('.app-container');
-  if (container) {
-    if (settings.bgImageFile) {
-      container.style.setProperty('--chat-bg-image', `url("${settings.bgImageFile}")`);
-    } else {
-      container.style.setProperty('--chat-bg-image', `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath fill-rule='evenodd' d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm1-61c3.16 0 6-2.51 6-6s-2.84-6-6-6-6 2.51-6 6 2.84 6 6 6zm-.6 48c2.2 0 4-1.8 4-4s-1.8-4-4-4-4 1.8-4 4 1.8 4 4 4zM70 14c2.2 0 4-1.8 4-4s-1.8-4-4-4-4 1.8-4 4 1.8 4 4 4z'/%3E%3C/g%3E%3C/svg%3E")`);
-    }
-  }
 }
 
 function lightenDarkenColor(col, amt) {
@@ -705,9 +702,7 @@ function renderAppearanceConfig() {
   cfgThemePreset.value = settings.theme || 'classic';
   
   cfgBotAvatarFile.value = '';
-  cfgBgImageFile.value = '';
   tempAvatarBase64 = '';
-  tempBgImageBase64 = '';
   
   if (settings.theme === 'custom') {
     customColorControls.style.display = 'flex';
@@ -741,14 +736,7 @@ cfgBotAvatarFile.onchange = (e) => {
   }
 };
 
-cfgBgImageFile.onchange = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    compressAndResizeImage(file, 800, 800, (base64) => {
-      tempBgImageBase64 = base64;
-    });
-  }
-};
+
 
 btnSaveAppearance.onclick = () => {
   if (!state.userSettings) return;
@@ -762,9 +750,6 @@ btnSaveAppearance.onclick = () => {
     state.userSettings.botAvatarImage = tempAvatarBase64;
   }
   
-  if (tempBgImageBase64) {
-    state.userSettings.bgImageFile = tempBgImageBase64;
-  }
   
   if (cfgThemePreset.value === 'custom') {
     state.userSettings.customColors = {
@@ -1033,9 +1018,44 @@ messageInput.onkeypress = (e) => {
 
 
 
+// Restore saved chat messages
+function restoreMessages() {
+  if (!state.messages || state.messages.length === 0) return;
+  // Keep the day divider, append messages after it
+  state.messages.forEach(msg => {
+    appendMessage(msg.text, msg.isSent, msg.customHTML || null, true);
+    // Override the auto-generated time with the saved one
+    const bubbles = chatMessages.querySelectorAll('.message-bubble');
+    const last = bubbles[bubbles.length - 1];
+    if (last) {
+      const ts = last.querySelector('.time-stamp');
+      if (ts && msg.time) ts.innerText = msg.time;
+    }
+  });
+}
+
+// Clear chat history
+function clearHistory() {
+  state.messages = [];
+  saveData();
+  // Remove all bubbles but keep the day divider
+  const bubbles = chatMessages.querySelectorAll('.message-bubble, .typing-bubble');
+  bubbles.forEach(b => b.remove());
+  triggerGreeting();
+}
+
+const btnClearHistory = document.getElementById('btn-clear-history');
+if (btnClearHistory) {
+  btnClearHistory.onclick = () => clearHistory();
+}
+
 // Init application
 window.onload = () => {
   loadData();
   applyThemeSettings();
-  triggerGreeting();
+  if (state.messages && state.messages.length > 0) {
+    restoreMessages();
+  } else {
+    triggerGreeting();
+  }
 };
