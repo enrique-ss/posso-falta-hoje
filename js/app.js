@@ -33,6 +33,99 @@ const WEEKDAYS = {
   0: 'Domingo'
 };
 
+// Predefined course data
+const COURSE_DATA = {
+  'licenciatura_computacao': {
+    name: 'Licenciatura em Computação',
+    subjects: [
+      { name: 'Algoritmos e Lógica de Programação', totalClasses: 120, absences: 0 },
+      { name: 'Ambientes Virtuais de Aprendizagem', totalClasses: 100, absences: 0 },
+      { name: 'História da Educação', totalClasses: 60, absences: 0 },
+      { name: 'Inglês Aplicado à Informática II', totalClasses: 40, absences: 0 },
+      { name: 'Práticas Curriculares em Sociedade II', totalClasses: 40, absences: 0 },
+      { name: 'Psicologia da Educação', totalClasses: 60, absences: 0 },
+      { name: 'Sociologia da Educação', totalClasses: 60, absences: 0 }
+    ],
+    schedule: [
+      // Segunda-feira
+      { day: 1, time: '19:00', room: '461A' },
+      { day: 1, time: '19:45', room: '461A' },
+      { day: 1, time: '20:30', room: '461A' },
+      { day: 1, time: '21:30', room: '461A' },
+      // Terça-feira
+      { day: 2, time: '19:00', room: '433C' },
+      { day: 2, time: '19:45', room: '433C' },
+      { day: 2, time: '20:30', room: '433C' },
+      { day: 2, time: '21:30', room: '631B' },
+      { day: 2, time: '22:15', room: '613B' },
+      // Quarta-feira
+      { day: 3, time: '19:00', room: '413A' },
+      { day: 3, time: '19:45', room: '413A' },
+      { day: 3, time: '20:30', room: '413A' },
+      { day: 3, time: '21:30', room: '416A' },
+      { day: 3, time: '22:15', room: '416A' },
+      // Quinta-feira
+      { day: 4, time: '19:00', room: '433C' },
+      { day: 4, time: '19:45', room: '433C' },
+      { day: 4, time: '20:30', room: '433C' },
+      { day: 4, time: '21:30', room: '437C' },
+      { day: 4, time: '22:15', room: '437C' },
+      // Sexta-feira
+      { day: 5, time: '19:00', room: '632B' },
+      { day: 5, time: '19:45', room: '632B' },
+      { day: 5, time: '20:30', room: '632B' },
+      { day: 5, time: '21:30', room: '632B' },
+      { day: 5, time: '22:15', room: '632B' }
+    ]
+  },
+  'design': {
+    name: 'Bacharelado em Design',
+    subjects: [
+      { name: 'Computação Gráfica I', totalClasses: 60, absences: 0 },
+      { name: 'Desenho de Observação e Expressão I', totalClasses: 60, absences: 0 },
+      { name: 'Desenho Geométrico', totalClasses: 60, absences: 0 },
+      { name: 'Desenho Técnico', totalClasses: 40, absences: 0 },
+      { name: 'Fundamentos do Design', totalClasses: 40, absences: 0 },
+      { name: 'Geometria Descritiva', totalClasses: 60, absences: 0 },
+      { name: 'História da Arte I', totalClasses: 40, absences: 0 },
+      { name: 'Inglês I', totalClasses: 40, absences: 0 },
+      { name: 'Introdução ao Design', totalClasses: 40, absences: 0 },
+      { name: 'Perspectiva', totalClasses: 40, absences: 0 }
+    ],
+    schedule: [
+      // Segunda-feira
+      { day: 1, time: '19:00', room: '229' },
+      { day: 1, time: '19:45', room: '229' },
+      { day: 1, time: '20:30', room: '227' },
+      { day: 1, time: '21:30', room: '227' },
+      { day: 1, time: '22:15', room: '227' },
+      // Terça-feira
+      { day: 2, time: '19:00', room: '227' },
+      { day: 2, time: '19:45', room: '227' },
+      { day: 2, time: '20:30', room: '229' },
+      { day: 2, time: '21:30', room: '229' },
+      // Quarta-feira
+      { day: 3, time: '19:00', room: '229' },
+      { day: 3, time: '19:45', room: '229' },
+      { day: 3, time: '20:30', room: '229' },
+      { day: 3, time: '21:30', room: '229' },
+      { day: 3, time: '22:15', room: '229' },
+      // Quinta-feira
+      { day: 4, time: '19:00', room: '227' },
+      { day: 4, time: '19:45', room: '227' },
+      { day: 4, time: '20:30', room: '151B' },
+      { day: 4, time: '21:30', room: '233' },
+      { day: 4, time: '22:15', room: '233' },
+      // Sexta-feira
+      { day: 5, time: '19:00', room: '227' },
+      { day: 5, time: '19:45', room: '227' },
+      { day: 5, time: '20:30', room: '227' },
+      { day: 5, time: '21:30', room: '227' },
+      { day: 5, time: '22:15', room: '227' }
+    ]
+  }
+};
+
 // DOM Elements
 const chatMessages = document.getElementById('chat-messages');
 const chatStatus = document.getElementById('chat-status');
@@ -153,7 +246,7 @@ function loadData() {
       bgImage: 'default',
       onboardingStep: 0
     };
-  } else if (state.userSettings.onboardingStep < 3) {
+  } else if (state.userSettings.onboardingStep < 4) {
     // Reset cached defaults if onboarding was not completed
     state.userSettings.botName = '';
     state.userSettings.botAvatar = '';
@@ -319,6 +412,21 @@ function generateVerdictReport(targetDay) {
   // Sort slots by time
   targetSlots.sort((a, b) => a.time.localeCompare(b.time));
   
+  // Generate schedule HTML for the day
+  let scheduleHTML = '';
+  targetSlots.forEach(slot => {
+    const sub = state.subjects.find(s => s.id === slot.subjectId);
+    if (!sub) return;
+    
+    scheduleHTML += `
+      <div class="schedule-item">
+        <div class="schedule-time">${slot.time}</div>
+        <div class="schedule-subject">${sub.name}</div>
+        <div class="schedule-room">Sala ${slot.room}</div>
+      </div>
+    `;
+  });
+  
   // Calculate frequencies and impacts
   let canSkipAll = true;
   let reportDetailsHTML = '';
@@ -368,13 +476,18 @@ function generateVerdictReport(targetDay) {
   });
   
   const verdictHTML = `
-    <div class="report-header">
-      <span class="report-label">Relatório de Faltas</span>
-      <span class="report-date">${getDateStringForDay(targetDay)}</span>
+    <div class="schedule-container">
+      <div class="schedule-title">📅 ${WEEKDAYS[targetDay]}</div>
+      <div class="schedule-list">
+        ${scheduleHTML}
+      </div>
     </div>
-    <ul class="report-details">
-      ${reportDetailsHTML}
-    </ul>
+    <div class="report-section">
+      <div class="report-title">📊 Análise de Faltas</div>
+      <ul class="report-details">
+        ${reportDetailsHTML}
+      </ul>
+    </div>
   `;
   
   return {
@@ -530,11 +643,23 @@ function processUserMessage(messageText) {
       state.userSettings.userName = messageText.trim();
       state.userSettings.onboardingStep = 2;
       saveData();
-      appendMessage(`Prazer em te conhecer, ${state.userSettings.userName}! 😊\n\nE como você gostaria de me chamar?`, false);
+      appendMessage(`Prazer em te conhecer, ${state.userSettings.userName}! 😊\n\nQual é o seu curso?`, false);
+      
+      // Show course selection buttons
+      appendOptionButtons([
+        { text: 'Licenciatura em Computação', class: 'primary', action: () => selectCourse('licenciatura_computacao') },
+        { text: 'Bacharelado em Design', class: 'primary', action: () => selectCourse('design') }
+      ]);
       return;
     }
     
     if (state.userSettings.onboardingStep === 2) {
+      // This step is handled by button clicks, not text input
+      appendMessage('Por favor, selecione um curso usando os botões acima.', false);
+      return;
+    }
+    
+    if (state.userSettings.onboardingStep === 3) {
       state.userSettings.botName = messageText.trim();
       // Generate initials for avatar
       let initials = 'IF';
@@ -546,12 +671,12 @@ function processUserMessage(messageText) {
         initials = cleanName.substring(0, 2).toUpperCase();
       }
       state.userSettings.botAvatar = initials;
-      state.userSettings.onboardingStep = 3;
+      state.userSettings.onboardingStep = 4;
       saveData();
       
       applyThemeSettings();
       
-      appendMessage(`Por favor, comece configurando suas disciplinas e horários no menu ⚙️ no canto superior direito para eu poder te ajudar com as faltas!`, false);
+      appendMessage(`Pronto! Tudo configurado! 🎉\n\nAgora você pode me perguntar se pode faltar em qualquer dia da semana!`, false);
       return;
     }
     
@@ -619,6 +744,143 @@ function logPresence() {
   }, 800);
 }
 
+// Select Course and load predefined data
+function selectCourse(courseId) {
+  const courseData = COURSE_DATA[courseId];
+  if (!courseData) {
+    appendMessage('Erro ao carregar dados do curso. Por favor, tente novamente.', false);
+    return;
+  }
+
+  // Clear existing data
+  state.subjects = [];
+  state.schedule = [];
+
+  // Load subjects
+  courseData.subjects.forEach(sub => {
+    const newId = 'sub_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    state.subjects.push({
+      id: newId,
+      name: sub.name,
+      totalClasses: sub.totalClasses,
+      absences: sub.absences
+    });
+  });
+
+  // Load schedule (map subject names to IDs)
+  const subjectMap = {};
+  state.subjects.forEach(sub => {
+    subjectMap[sub.name] = sub.id;
+  });
+
+  // For Licenciatura em Computação, map schedule slots to specific subjects
+  if (courseId === 'licenciatura_computacao') {
+    const subjectOrder = [
+      'Algoritmos e Lógica de Programação', // 4x Segunda
+      'Sociologia da Educação',             // 3x Terça
+      'Práticas Curriculares em Sociedade II', // 2x Terça
+      'Psicologia da Educação',             // 3x Quarta
+      'Algoritmos e Lógica de Programação', // 2x Quarta
+      'História da Educação',               // 3x Quinta
+      'Inglês Aplicado à Informática II',   // 2x Quinta
+      'Ambientes Virtuais de Aprendizagem'  // 5x Sexta
+    ];
+
+    let subjectIndex = 0;
+    courseData.schedule.forEach((slot) => {
+      const subjectName = subjectOrder[subjectIndex];
+      const subjectId = subjectMap[subjectName];
+
+      if (subjectId) {
+        state.schedule.push({
+          id: 'slot_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+          subjectId: subjectId,
+          day: slot.day,
+          time: slot.time,
+          room: slot.room
+        });
+      }
+
+      // Move to next subject when day changes or based on slot count
+      if (slot.day === 1 && slot.time === '21:30') subjectIndex = 1; // After 4th slot Monday (end of Monday)
+      if (slot.day === 2 && slot.time === '20:30') subjectIndex = 2; // After 3rd slot Tuesday (Sociologia ends)
+      if (slot.day === 2 && slot.time === '22:15') subjectIndex = 3; // After 5th slot Tuesday (end of Tuesday)
+      if (slot.day === 3 && slot.time === '20:30') subjectIndex = 4; // After 3rd slot Wednesday (Psicologia ends)
+      if (slot.day === 3 && slot.time === '22:15') subjectIndex = 5; // After 5th slot Wednesday (end of Wednesday)
+      if (slot.day === 4 && slot.time === '20:30') subjectIndex = 6; // After 3rd slot Thursday (História ends)
+      if (slot.day === 4 && slot.time === '22:15') subjectIndex = 7; // After 5th slot Thursday (end of Thursday)
+      // Friday ends with Ambientes Virtuais de Aprendizagem (subjectIndex 7)
+    });
+  } else if (courseId === 'design') {
+    // For Bacharelado em Design, map schedule slots to specific subjects
+    const subjectOrder = [
+      'Introdução ao Design',              // 2x Segunda 19:00, 19:45
+      'Geometria Descritiva',              // 3x Segunda 20:30, 21:30, 22:15
+      'Inglês I',                          // 2x Terça 19:00, 19:45
+      'Fundamentos do Design',             // 2x Terça 20:30, 21:30
+      'História da Arte I',                // 2x Quarta 19:00, 19:45
+      'Desenho de Observação e Expressão I', // 3x Quarta 20:30, 21:30, 22:15
+      'Desenho Técnico',                   // 2x Quinta 19:00, 19:45
+      'Computação Gráfica I',              // 3x Quinta 20:30, 21:30, 22:15
+      'Perspectiva',                       // 2x Sexta 19:00, 19:45
+      'Desenho Geométrico'                 // 3x Sexta 20:30, 21:30, 22:15
+    ];
+
+    let subjectIndex = 0;
+    courseData.schedule.forEach((slot) => {
+      const subjectName = subjectOrder[subjectIndex];
+      const subjectId = subjectMap[subjectName];
+
+      if (subjectId) {
+        state.schedule.push({
+          id: 'slot_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+          subjectId: subjectId,
+          day: slot.day,
+          time: slot.time,
+          room: slot.room
+        });
+      }
+
+      // Move to next subject based on slot count per day
+      if (slot.day === 1 && slot.time === '19:45') subjectIndex = 1; // After 2nd slot Monday (Introdução ends)
+      if (slot.day === 1 && slot.time === '22:15') subjectIndex = 2; // After 5th slot Monday (end of Monday)
+      if (slot.day === 2 && slot.time === '19:45') subjectIndex = 3; // After 2nd slot Tuesday (Inglês ends)
+      if (slot.day === 2 && slot.time === '21:30') subjectIndex = 4; // After 4th slot Tuesday (end of Tuesday)
+      if (slot.day === 3 && slot.time === '19:45') subjectIndex = 5; // After 2nd slot Wednesday (História ends)
+      if (slot.day === 3 && slot.time === '22:15') subjectIndex = 6; // After 5th slot Wednesday (end of Wednesday)
+      if (slot.day === 4 && slot.time === '19:45') subjectIndex = 7; // After 2nd slot Thursday (Desenho Técnico ends)
+      if (slot.day === 4 && slot.time === '22:15') subjectIndex = 8; // After 5th slot Thursday (end of Thursday)
+      if (slot.day === 5 && slot.time === '19:45') subjectIndex = 9; // After 2nd slot Friday (Perspectiva ends)
+      
+    });
+  } else {
+    // For other courses, use simple cycling
+    courseData.schedule.forEach((slot, index) => {
+      const subjectIndex = index % courseData.subjects.length;
+      const subjectName = courseData.subjects[subjectIndex].name;
+      const subjectId = subjectMap[subjectName];
+
+      if (subjectId) {
+        state.schedule.push({
+          id: 'slot_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+          subjectId: subjectId,
+          day: slot.day,
+          time: slot.time,
+          room: slot.room
+        });
+      }
+    });
+  }
+
+  saveData();
+  
+  // Move to next onboarding step
+  state.userSettings.onboardingStep = 3;
+  saveData();
+  
+  appendMessage(`Ótimo! Configurei as disciplinas e a grade horária para ${courseData.name}. 📚\n\nE como você gostaria de me chamar?`, false);
+}
+
 // Informal greeting variations
 const INFORMAL_GREETINGS = [
   "Eaí, ta afim de faltar hoje? 😏",
@@ -640,7 +902,7 @@ function triggerGreeting() {
   setTimeout(() => {
     hideTypingIndicator();
     
-    if (state.userSettings && state.userSettings.onboardingStep < 3) {
+    if (state.userSettings && state.userSettings.onboardingStep < 4) {
       state.userSettings.onboardingStep = 1;
       saveData();
       appendMessage("Antes de começarmos, como você gostaria de ser chamado(a)?", false);
@@ -1041,7 +1303,6 @@ function clearHistory() {
   // Remove all bubbles but keep the day divider
   const bubbles = chatMessages.querySelectorAll('.message-bubble, .typing-bubble');
   bubbles.forEach(b => b.remove());
-  triggerGreeting();
 }
 
 const btnClearHistory = document.getElementById('btn-clear-history');
