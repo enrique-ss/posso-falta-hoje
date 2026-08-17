@@ -341,12 +341,16 @@ body {
 /* Chat Buttons (Interactive Templates) */
 .chat-action-buttons {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   gap: 8px;
   width: 85%;
   align-self: flex-start;
   animation: messageSlideIn 0.3s cubic-bezier(0.1, 0.8, 0.25, 1) 0.15s forwards;
   opacity: 0;
+}
+
+.chat-action-buttons.horizontal {
+  flex-direction: row;
   flex-wrap: wrap;
 }
 

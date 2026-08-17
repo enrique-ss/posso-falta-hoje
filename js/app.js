@@ -360,9 +360,12 @@ function hideTypingIndicator() {
 }
 
 // Append Option Buttons to the Chat
-function appendOptionButtons(options) {
+function appendOptionButtons(options, horizontal = false) {
   const container = document.createElement('div');
   container.className = 'chat-action-buttons';
+  if (horizontal) {
+    container.classList.add('horizontal');
+  }
   
   options.forEach(opt => {
     const btn = document.createElement('button');
@@ -370,6 +373,8 @@ function appendOptionButtons(options) {
     btn.innerText = opt.text;
     btn.onclick = () => {
       container.remove();
+      // Render user's choice as a message
+      appendMessage(opt.text, true);
       opt.action();
     };
     container.appendChild(btn);
@@ -643,12 +648,14 @@ function processUserMessage(messageText) {
       state.userSettings.userName = messageText.trim();
       state.userSettings.onboardingStep = 2;
       saveData();
-      appendMessage(`Prazer em te conhecer, ${state.userSettings.userName}! 😊\n\nQual é o seu curso?`, false);
+      appendMessage(`Prazer em te conhecer, ${state.userSettings.userName}! 😊`, false);
+      appendMessage('Qual é o seu curso?', false);
       
       // Show course selection buttons
       appendOptionButtons([
         { text: 'Licenciatura em Computação', class: 'primary', action: () => selectCourse('licenciatura_computacao') },
-        { text: 'Bacharelado em Design', class: 'primary', action: () => selectCourse('design') }
+        { text: 'Bacharelado em Design', class: 'primary', action: () => selectCourse('design') },
+        { text: 'Outro', class: 'primary', action: () => selectCourse('other') }
       ]);
       return;
     }
@@ -676,14 +683,17 @@ function processUserMessage(messageText) {
       
       applyThemeSettings();
       
-      appendMessage(`Pronto! Tudo configurado! 🎉\n\nQuando quiser saber seus horários ou faltas é só me informar o dia da semana desejado!`, false);
+      appendMessage(`Pronto! Tudo configurado! 🎉`, false);
+      appendMessage('Quando quiser saber seus horários ou faltas é só me informar o dia da semana desejado!', false);
+      appendMessage('⚠️ Não esqueça de configurar suas faltas atuais no SUAP através das configurações (⚙️) para que eu possa calcular corretamente sua frequência!', false);
       return;
     }
     
     const targetDay = detectTargetDayFromMessage(messageText);
     
     if (targetDay === null) {
-      appendMessage('Desculpe, não entendi muito bem. 😅\n\nPor favor, digite sua pergunta informando o dia que deseja consultar.', false);
+      appendMessage('Desculpe, não entendi muito bem. 😅', false);
+      appendMessage('Por favor, digite sua pergunta informando o dia que deseja consultar.', false);
       return;
     }
     
@@ -711,7 +721,7 @@ function processUserMessage(messageText) {
     appendOptionButtons([
       { text: 'Sim', class: 'danger', action: () => logAbsenceForSubjectIds(report.subjectIdsToAbsence) },
       { text: 'Não', class: 'primary', action: () => logPresence() }
-    ]);
+    ], true);
     
   }, 1200);
 }
@@ -742,7 +752,9 @@ function logAbsenceForSubjectIds(subjectIds) {
     saveData();
     renderSubjects();
     
-    appendMessage(`Falta registrada com sucesso!\n- ${updatedNames.join('\n- ')}\n\nSua frequência foi atualizada no painel!`, false);
+    appendMessage(`Falta registrada com sucesso!`, false);
+    appendMessage(`- ${updatedNames.join('\n- ')}`, false);
+    appendMessage('Sua frequência foi atualizada no painel!', false);
   }, 800);
 }
 
@@ -757,15 +769,28 @@ function logPresence() {
 
 // Select Course and load predefined data
 function selectCourse(courseId) {
+  // Clear existing data
+  state.subjects = [];
+  state.schedule = [];
+
+  if (courseId === 'other') {
+    // For "Outro", leave subjects and schedule empty
+    saveData();
+    
+    // Move to next onboarding step
+    state.userSettings.onboardingStep = 3;
+    saveData();
+    
+    appendMessage(`Entendido! Você configurará suas disciplinas e grade horária manualmente.`, false);
+    appendMessage('E como você gostaria de me chamar?', false);
+    return;
+  }
+
   const courseData = COURSE_DATA[courseId];
   if (!courseData) {
     appendMessage('Erro ao carregar dados do curso. Por favor, tente novamente.', false);
     return;
   }
-
-  // Clear existing data
-  state.subjects = [];
-  state.schedule = [];
 
   // Load subjects
   courseData.subjects.forEach(sub => {
@@ -889,7 +914,8 @@ function selectCourse(courseId) {
   state.userSettings.onboardingStep = 3;
   saveData();
   
-  appendMessage(`Ótimo! Configurei as disciplinas e a grade horária para ${courseData.name}. 📚\n\nE como você gostaria de me chamar?`, false);
+  appendMessage(`Ótimo! Configurei as disciplinas e a grade horária para ${courseData.name}. 📚`, false);
+  appendMessage('E como você gostaria de me chamar?', false);
 }
 
 // Informal greeting variations
