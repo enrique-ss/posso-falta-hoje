@@ -18,7 +18,8 @@ let state = {
       bubbleReceived: '#202c33'
     },
     bgImage: 'default',
-    onboardingStep: 0
+    onboardingStep: 0,
+    courseName: ''
   },
   messages: [] // { text, isSent, customHTML, time }
 };
@@ -240,12 +241,17 @@ function loadData() {
         bubbleReceived: '#202c33'
       },
       bgImage: 'default',
-      onboardingStep: 0
+      onboardingStep: 0,
+      courseName: ''
     };
   } else {
     // Migrate old saves that don't have themeMode — default to dark and persist immediately
     if (!state.userSettings.themeMode) {
       state.userSettings.themeMode = 'dark';
+    }
+    // Migrate old saves that don't have courseName
+    if (!state.userSettings.courseName) {
+      state.userSettings.courseName = '';
     }
     if (state.userSettings.onboardingStep < 4) {
       // Reset cached defaults if onboarding was not completed
@@ -542,9 +548,10 @@ function generateVerdictReport(targetDay) {
     `;
   });
   
+  const courseName = state.userSettings.courseName || 'Seu curso';
   const verdictHTML = `
     <div class="schedule-container">
-      <div class="schedule-title">Horários de ${WEEKDAYS[targetDay]}</div>
+      <div class="schedule-title">Horários de ${WEEKDAYS[targetDay]} (${courseName})</div>
       <div class="schedule-list">
         ${scheduleHTML}
       </div>
@@ -592,6 +599,142 @@ function detectTargetDayFromMessage(message) {
   }
   
   return null;
+}
+
+// Analyze user message to detect requested course
+function detectCourseFromMessage(message) {
+  const msg = message
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+  
+  // Check for design course and its abbreviations
+  if (msg.includes('design') || msg.includes('deg')) {
+    return 'design';
+  }
+  
+  // Check for licenciatura computacao and its abbreviations
+  if (msg.includes('licenciatura') || msg.includes('computacao') || msg.includes('computação') || msg.includes('lcomp')) {
+    return 'licenciatura_computacao';
+  }
+  
+  return null;
+}
+
+// Generate schedule display for a specific course (read-only, no absence analysis)
+function generateCourseScheduleDisplay(courseId, targetDay) {
+  const courseData = COURSE_DATA[courseId];
+  if (!courseData) {
+    return {
+      success: false,
+      message: 'Curso não encontrado. Tente "design" (ou "deg") ou "licenciatura computação" (ou "lcomp").'
+    };
+  }
+  
+  // Filter schedule slots for target day
+  const targetSlots = courseData.schedule.filter(slot => parseInt(slot.day) === targetDay);
+  
+  if (targetDay === 6 || targetDay === 0) {
+    return {
+      success: true,
+      noClasses: true,
+      message: `Final de semana! (${WEEKDAYS[targetDay]}) Não há aulas agendadas para ${courseData.name}.`
+    };
+  }
+  
+  if (targetSlots.length === 0) {
+    return {
+      success: true,
+      noClasses: true,
+      message: `Não há aulas cadastradas para ${WEEKDAYS[targetDay]} no curso de ${courseData.name}.`
+    };
+  }
+  
+  // Sort slots by time
+  targetSlots.sort((a, b) => a.time.localeCompare(b.time));
+  
+  // Define subject mapping for each course based on the original selectCourse logic
+  const getSubjectForSlot = (courseId, day, time) => {
+    if (courseId === 'licenciatura_computacao') {
+      // Monday: Algoritmos (4 slots)
+      if (day === 1) return 'Algoritmos e Lógica de Programação';
+      // Tuesday: Sociologia (3 slots), Práticas (2 slots)
+      if (day === 2) {
+        if (time === '19:00' || time === '19:45' || time === '20:30') return 'Sociologia da Educação';
+        return 'Práticas Curriculares em Sociedade II';
+      }
+      // Wednesday: Psicologia (3 slots), Algoritmos (2 slots)
+      if (day === 3) {
+        if (time === '19:00' || time === '19:45' || time === '20:30') return 'Psicologia da Educação';
+        return 'Algoritmos e Lógica de Programação';
+      }
+      // Thursday: História (3 slots), Inglês (2 slots)
+      if (day === 4) {
+        if (time === '19:00' || time === '19:45' || time === '20:30') return 'História da Educação';
+        return 'Inglês Aplicado à Informática II';
+      }
+      // Friday: Ambientes (5 slots)
+      if (day === 5) return 'Ambientes Virtuais de Aprendizagem';
+    } else if (courseId === 'design') {
+      // Monday: Introdução (2 slots), Geometria (3 slots)
+      if (day === 1) {
+        if (time === '19:00' || time === '19:45') return 'Introdução ao Design';
+        return 'Geometria Descritiva';
+      }
+      // Tuesday: Inglês (2 slots), Fundamentos (2 slots)
+      if (day === 2) {
+        if (time === '19:00' || time === '19:45') return 'Inglês I';
+        return 'Fundamentos do Design';
+      }
+      // Wednesday: História (2 slots), Desenho Observação (3 slots)
+      if (day === 3) {
+        if (time === '19:00' || time === '19:45') return 'História da Arte I';
+        return 'Desenho de Observação e Expressão I';
+      }
+      // Thursday: Desenho Técnico (2 slots), Computação Gráfica (3 slots)
+      if (day === 4) {
+        if (time === '19:00' || time === '19:45') return 'Desenho Técnico';
+        return 'Computação Gráfica I';
+      }
+      // Friday: Perspectiva (2 slots), Desenho Geométrico (3 slots)
+      if (day === 5) {
+        if (time === '19:00' || time === '19:45') return 'Perspectiva';
+        return 'Desenho Geométrico';
+      }
+    }
+    return 'Aula';
+  };
+  
+  // Generate schedule HTML for the day with subject names
+  let scheduleHTML = '';
+  
+  targetSlots.forEach((targetSlot) => {
+    const subjectName = getSubjectForSlot(courseId, targetSlot.day, targetSlot.time);
+    
+    scheduleHTML += `
+      <div class="schedule-item">
+        <div class="schedule-time">${targetSlot.time}</div>
+        <div class="schedule-subject">${subjectName}</div>
+        <div class="schedule-room">${targetSlot.room}</div>
+      </div>
+    `;
+  });
+  
+  const scheduleDisplayHTML = `
+    <div class="schedule-container course-only">
+      <div class="schedule-title">Horários de ${WEEKDAYS[targetDay]} (${courseData.name})</div>
+      <div class="schedule-list">
+        ${scheduleHTML}
+      </div>
+    </div>
+  `;
+  
+  return {
+    success: true,
+    noClasses: false,
+    html: scheduleDisplayHTML
+  };
 }
 
 // Theme presets configurations (Dark and Light modes)
@@ -861,6 +1004,7 @@ function processUserMessage(messageText) {
       appendBotMessage(`Pronto! Tudo configurado! 🎉`);
       appendBotMessage('Não esqueça de informar suas faltas atuais com base no SUAP através das configurações para que eu possa calcular corretamente sua frequência!');
       appendBotMessage('Quando quiser saber seus horários ou faltas é só me informar o dia da semana desejado!');
+      appendBotMessage('Você também pode consultar a grade de outros cursos digitando o nome do curso (ex: "design", "licenciatura computação", "deg", "lcomp") junto com o dia da semana!');
       return;
     }
     
@@ -872,6 +1016,7 @@ function processUserMessage(messageText) {
     }
     
     const targetDay = detectTargetDayFromMessage(messageText);
+    const targetCourse = detectCourseFromMessage(messageText);
     
     if (targetDay === null) {
       appendBotMessage('Desculpe, não entendi muito bem. 😅');
@@ -879,6 +1024,26 @@ function processUserMessage(messageText) {
       return;
     }
     
+    // Check if user is asking about another course's schedule
+    if (targetCourse) {
+      const courseSchedule = generateCourseScheduleDisplay(targetCourse, targetDay);
+      
+      if (!courseSchedule.success) {
+        appendBotMessage(courseSchedule.message);
+        return;
+      }
+      
+      if (courseSchedule.noClasses) {
+        appendBotMessage(courseSchedule.message);
+        return;
+      }
+      
+      // Show the course schedule (read-only, no absence analysis)
+      appendBotMessage('', courseSchedule.html);
+      return;
+    }
+    
+    // Process user's own schedule with absence analysis
     const report = generateVerdictReport(targetDay);
     
     if (!report.success) {
@@ -957,6 +1122,7 @@ function selectCourse(courseId) {
 
   if (courseId === 'other') {
     // For "Outro", leave subjects and schedule empty
+    state.userSettings.courseName = 'Curso Personalizado';
     saveData();
     
     // Move to next onboarding step
@@ -1091,6 +1257,9 @@ function selectCourse(courseId) {
   }
 
   saveData();
+  
+  // Save course name for display in schedule
+  state.userSettings.courseName = courseData.name;
   
   // Move to next onboarding step
   state.userSettings.onboardingStep = 3;
